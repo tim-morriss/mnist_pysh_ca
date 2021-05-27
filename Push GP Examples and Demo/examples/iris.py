@@ -5,7 +5,7 @@ from pyshgp.push.instruction_set import InstructionSet
 
 from pyshgp.gp.estimators import PushEstimator
 from pyshgp.gp.genome import GeneSpawner
-
+from pyshgp.tap import Tap, TapManager
 
 # A sample of the famous Iris dataset.
 data = pd.DataFrame(
@@ -44,7 +44,6 @@ data = pd.DataFrame(
     columns=["sepal_length", "sepal_width", "petal_length", "petal_width", "label"]
 )
 
-
 spawner = GeneSpawner(
     n_inputs=1,
     instruction_set=InstructionSet().register_core_by_stack({"bool", "int", "float"}),
@@ -54,6 +53,19 @@ spawner = GeneSpawner(
         random.random
     ]
 )
+
+
+class MyCustomTap(Tap):
+
+    def pre(self, id: str, args, kwargs, obj=None):
+        """Print population stats before the next step of the run."""
+        search = args[0]
+        best_individual = search.population.best()
+        print()
+        print("Generation:", search.generation)
+        print("Best Program:", best_individual.program.pretty_str())
+        print("Best Error Vector:", best_individual.error_vector)
+        print("Best Total Error:", best_individual.total_error)
 
 
 if __name__ == "__main__":
@@ -66,5 +78,10 @@ if __name__ == "__main__":
 
     x = data[["sepal_length", "sepal_width", "petal_length", "petal_width"]]
     y = data[["label"]]
+    print("X: %s \n y: %s" % (x, y))
+
+    TapManager.register("pyshgp.gp.search.SearchAlgorithm.step", MyCustomTap())
 
     est.fit(x, y)
+    best_solution = est.solution
+    print("Program:\n", best_solution.program.code.pretty_str())
