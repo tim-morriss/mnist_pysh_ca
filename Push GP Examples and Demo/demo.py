@@ -144,6 +144,7 @@ class MyCustomTap(Tap):
     def pre(self, id: str, args, kwargs, obj=None):
         """Print population stats before the next step of the run."""
         search = args[0]
+        print(args)
         best_individual = search.population.best()
         print()
         print("Generation:", search.generation)

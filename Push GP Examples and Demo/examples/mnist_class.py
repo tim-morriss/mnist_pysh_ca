@@ -1,56 +1,15 @@
 import random
-import numpy as np
-# For loading MNIST
-from struct import unpack
+from load_datasets import LoadDatasets
 from typing import Sequence
 from pyshgp.gp.individual import Individual
 from pyshgp.gp.genome import GeneSpawner
 from pyshgp.push.instruction_set import InstructionSet
 from pyshgp.gp.estimators import PushEstimator
 # from pyshgp.gp.selection import Lexicase
+from pyshgp.monitoring import VerbosityConfig
 from pyshgp.gp.selection import Selector
 from pyshgp.gp.population import Population
 from pyshgp.tap import Tap, TapManager
-
-
-def load_mnist(image_file, label_file, cut_size=0):
-    # Open image and label files in binary mode
-    images = open(image_file, 'rb')
-    labels = open(label_file, 'rb')
-
-    # Get metadata for images
-    images.read(4)  # Skip the magic_number
-    number_of_images = images.read(4)
-    number_of_images = unpack('>I', number_of_images)[0]
-    rows = images.read(4)
-    rows = unpack('>I', rows)[0]
-    cols = images.read(4)
-    cols = unpack('>I', cols)[0]
-
-    # Get metadata for labels
-    labels.read(4)
-    N = labels.read(4)
-    N = unpack('>I', N)[0]
-
-    # Get data
-    X = np.zeros((N, rows * cols), dtype=np.int64)  # Initialise X
-    y = np.zeros(N, dtype=np.int64)  # Initialise y
-    for i in range(N):
-        for j in range(rows * cols):
-            tmp_pixel = images.read(1)
-            tmp_pixel = unpack('>B', tmp_pixel)[0]
-            X[i][j] = tmp_pixel
-        tmp_label = labels.read(1)
-        y[i] = unpack('>B', tmp_label)[0]
-
-    images.close()
-    labels.close()
-
-    print("MNIST Loaded with a cut size of: %i" % cut_size)
-    if cut_size == 0:
-        return X, y
-    else:
-        return X[:cut_size], y[:cut_size]
 
 
 def mnist_pysh(train_x, train_y, test_x, test_y, pop_size=500, gens=100):
@@ -66,6 +25,8 @@ def mnist_pysh(train_x, train_y, test_x, test_y, pop_size=500, gens=100):
     )
 
     # selector = Lexicase(epsilon=False)
+
+    verbosity = VerbosityConfig()
 
     estimator = PushEstimator(
         spawner=spawner,
@@ -127,7 +88,7 @@ class WackySelector(Selector):
 
 
 class MyCustomTap(Tap):
-
+    
     def pre(self, id: str, args, kwargs, obj=None):
         """Print population stats before the next step of the run."""
         search = args[0]
@@ -140,13 +101,13 @@ class MyCustomTap(Tap):
 
 
 if __name__ == '__main__':
-    train_X, train_y = load_mnist(
+    train_X, train_y = LoadDatasets.load_mnist(
         '../../Data/mnist/train-images.idx3-ubyte',
         '../../Data/mnist/train-labels.idx1-ubyte',
         1000
     )
 
-    test_X, test_y = load_mnist(
+    test_X, test_y = LoadDatasets.load_mnist(
         '../../Data/mnist/t10k-images.idx3-ubyte',
         '../../Data/mnist/t10k-labels.idx1-ubyte',
         1000
