@@ -1,12 +1,15 @@
 # import json
 import numpy as np
+# import pygame
 from typing import Sequence
 from cellular_automaton import CellularAutomaton, MooreNeighborhood, CAWindow, EdgeRule
+# from cellular_automaton.display import PygameEngine
 from load_datasets import LoadDatasets
+
+
 # from pyshgp.push.stack import PushStack
 # from pyshgp.push.types import PushIntType
-# from pyshgp.push.config import PushConfig
-
+# from pyshgp.push.config import
 
 class MNISTCA(CellularAutomaton):
 
@@ -20,17 +23,24 @@ class MNISTCA(CellularAutomaton):
 
     def init_cell_state(self, cell_coordinate: Sequence) -> Sequence:
         cell = self.x[0][cell_coordinate[0]][cell_coordinate[1]]
-        init = (1 if cell > 0 else 0)
+        init = cell
         return [init]
 
     def evolve_rule(self, last_cell_state: Sequence, neighbors_last_states: Sequence) -> Sequence:
-        return last_cell_state
+        alive_neighbours = []
+        for n in neighbors_last_states:
+            if n[0] > 0:
+                alive_neighbours.append(1)
+        if len(alive_neighbours) > 2:
+            return [1]
+        else:
+            return [0]
 
     def mnist_load(self):
         train_X, train_y = LoadDatasets.load_mnist(
             'Data/mnist/train-images.idx3-ubyte',
             'Data/mnist/train-labels.idx1-ubyte',
-            self.n_size
+            self.n_size, plot_digit=0
         )
 
         train_X = [np.resize(train_X[i], (28, 28)) for i in range(train_X.shape[0])]  # Reshape X
@@ -53,10 +63,16 @@ class MNISTCA(CellularAutomaton):
 
 
 if __name__ == '__main__':
-    CAWindow(
-        cellular_automaton=MNISTCA(1),
-        window_size=(1000, 830)
-    ).run(evolutions_per_second=1)
+
+    # CAWindow(
+    #     cellular_automaton=MNISTCA(1),
+    #     window_size=(1000, 1000)
+    # ).run(evolutions_per_second=1)
+
+    x_train, y_train = LoadDatasets.load_mnist_tf(cut_size=10, plot_digit=5)
+    print("x_train: %s, y_train: %s" % (x_train, y_train))
+
+
     # x, y = ca_grid(2)
     # print(type(x[0]))
     #

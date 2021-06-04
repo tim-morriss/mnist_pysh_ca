@@ -3,7 +3,7 @@
 import numpy as np
 import random
 
-from pyshgp.gp.selection import Lexicase
+# from pyshgp.gp.selection import Lexicase
 from pyshgp.gp.selection import Tournament
 from pyshgp.gp.estimators import PushEstimator
 from pyshgp.gp.genome import GeneSpawner
