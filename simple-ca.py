@@ -5,11 +5,7 @@ from typing import Sequence
 from cellular_automaton import CellularAutomaton, MooreNeighborhood, CAWindow, EdgeRule
 # from cellular_automaton.display import PygameEngine
 from load_datasets import LoadDatasets
-
-
-# from pyshgp.push.stack import PushStack
-# from pyshgp.push.types import PushIntType
-# from pyshgp.push.config import
+from ca_animate import CAAnimate
 
 class MNISTCA(CellularAutomaton):
 
@@ -37,49 +33,15 @@ class MNISTCA(CellularAutomaton):
             return [0]
 
     def mnist_load(self):
-        train_X, train_y = LoadDatasets.load_mnist(
-            'Data/mnist/train-images.idx3-ubyte',
-            'Data/mnist/train-labels.idx1-ubyte',
-            self.n_size, plot_digit=0
-        )
+        train_X, train_y = LoadDatasets.load_mnist_tf(cut_size=self.n_size, plot_digit=None)
 
-        train_X = [np.resize(train_X[i], (28, 28)) for i in range(train_X.shape[0])]  # Reshape X
+        train_X = [np.resize(train_X[i], (28, 28)) for i in range(train_X.shape[0])] # Reshape X
+
+        print(train_X[0].shape)
 
         return train_X, train_y
 
 
-# def ca_grid(n_size) -> Tuple[np.ndarray, np.ndarray]:
-#     train_X, train_y = LoadDatasets.load_mnist(
-#         'Data/mnist/train-images.idx3-ubyte',
-#         'Data/mnist/train-images.idx3-ubyte',
-#         n_size
-#     )
-#
-#     # Reshape X
-#     train_X = [np.resize(train_X[i], (28, 28)) for i in range(train_X.shape[0])]
-#
-#     return np.array(train_X), np.array(train_y)
-#     # print("train_x: %s \n train_y: %s" % (train_X, train_y))
-
-
 if __name__ == '__main__':
-
-    # CAWindow(
-    #     cellular_automaton=MNISTCA(1),
-    #     window_size=(1000, 1000)
-    # ).run(evolutions_per_second=1)
-
-    x_train, y_train = LoadDatasets.load_mnist_tf(cut_size=10, plot_digit=5)
-    print("x_train: %s, y_train: %s" % (x_train, y_train))
-
-
-    # x, y = ca_grid(2)
-    # print(type(x[0]))
-    #
-    # print("(0,0): %s" % x[0][0][0])  # Finding (0,0)
-    # print("(0,1): %s" % x[0][0][1])  # Finding (0,1)
-
-    # push_stack = PushStack(PushIntType(), PushConfig())
-    # push_stack.append(4)
-    # push_stack.append(5)
-    # print(push_stack)
+    train_x, train_y = LoadDatasets.load_mnist_tf(100)
+    CAAnimate.animate_ca(train_x, 'output.gif')

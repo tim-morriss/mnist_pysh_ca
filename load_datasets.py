@@ -27,13 +27,13 @@ class LoadDatasets:
         images.read(4)  # Skip the magic_number
         number_of_images = images.read(4)
         number_of_images = unpack('>I', number_of_images)[0]
-        print("number of images: %s" % number_of_images)
+        # print("number of images: %s" % number_of_images)
         rows = images.read(4)
         rows = unpack('>I', rows)[0]
-        print("rows %s" % rows)
+        # print("rows %s" % rows)
         cols = images.read(4)
         cols = unpack('>I', cols)[0]
-        print("cols: %s" % cols)
+        # print("cols: %s" % cols)
 
         # Get metadata for labels
         labels.read(4)
@@ -54,6 +54,8 @@ class LoadDatasets:
         images.close()
         labels.close()
 
+        X = np.array(X / 255.0, ).astype(np.float32)
+
         # Allows a digit to be plotted with matplotlib
         if plot_digit is not None:
             LoadDatasets.plot_mnist(X[plot_digit])
@@ -68,14 +70,17 @@ class LoadDatasets:
     @staticmethod
     def load_mnist_tf(cut_size: int = 0, plot_digit: int = None):
         (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
+        x_train = np.array(x_train / 255.0, ).astype(np.float32)
+        # x_test = np.array(x_test / 255.0, ).astype(np.float32)
 
         if plot_digit is not None:
             LoadDatasets.plot_mnist(x_train[plot_digit])
 
-        print("MNIST Loaded with a cut size of: %i" % cut_size)
         if cut_size == 0:
+            print("Full MNIST loaded")
             return x_train, y_train
         else:
+            print("MNIST loaded with a cut size of: %i" % cut_size)
             return x_train[:cut_size], y_train[:cut_size]
 
 
