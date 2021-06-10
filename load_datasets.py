@@ -68,7 +68,15 @@ class LoadDatasets:
 
 
     @staticmethod
-    def load_mnist_tf(cut_size: int = 0, plot_digit: int = None):
+    def load_mnist_tf(cut_size: int = None, plot_digit: int = None, return_digit: int = None):
+        """
+        Loads the mnist dataset from the Tensorflow package.
+        This is *much* faster than the load_mnist function, so is preferred if using non-edited MNIST.
+        :param cut_size:
+        :param plot_digit:
+        :param return_digit:
+        :return:
+        """
         (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
         x_train = np.array(x_train / 255.0, ).astype(np.float32)
         # x_test = np.array(x_test / 255.0, ).astype(np.float32)
@@ -76,13 +84,16 @@ class LoadDatasets:
         if plot_digit is not None:
             LoadDatasets.plot_mnist(x_train[plot_digit])
 
-        if cut_size == 0:
-            print("Full MNIST loaded")
-            return x_train, y_train
+        if return_digit is not None:
+            print("Digit %s returned" % return_digit)
+            return np.expand_dims(x_train[return_digit], axis=0), np.expand_dims(y_train[return_digit], axis=0)
         else:
-            print("MNIST loaded with a cut size of: %i" % cut_size)
-            return x_train[:cut_size], y_train[:cut_size]
-
+            if cut_size == 0 or cut_size is None:
+                print("Full MNIST loaded")
+                return x_train, y_train
+            else:
+                print("MNIST loaded with a cut size of: %i" % cut_size)
+                return x_train[:cut_size], y_train[:cut_size]
 
     @staticmethod
     def plot_mnist(image: np.array):

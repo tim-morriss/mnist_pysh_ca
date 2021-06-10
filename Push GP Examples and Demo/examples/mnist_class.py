@@ -44,6 +44,7 @@ def mnist_pysh(train_x, train_y, test_x, test_y, pop_size=500, gens=100):
     print("X: %s \n y: %s" % (X[0], y))
 
     TapManager.register("pyshgp.gp.search.SearchAlgorithm.step", MyCustomTap())
+    TapManager.register("pyshgp.push.interpreter.PushInterpreter.run", StateTap())
 
     estimator.fit(X=X, y=y)
 
@@ -88,7 +89,7 @@ class WackySelector(Selector):
 
 
 class MyCustomTap(Tap):
-    
+
     def pre(self, id: str, args, kwargs, obj=None):
         """Print population stats before the next step of the run."""
         search = args[0]
@@ -100,17 +101,26 @@ class MyCustomTap(Tap):
         print("Best Total Error:", best_individual.total_error)
 
 
+class StateTap(Tap):
+
+    def pre(self, id: str, args, kwargs):
+        state = args[0]
+        curr_state = state.state
+        # print()
+        print("Current state:", curr_state)
+
+
 if __name__ == '__main__':
     train_X, train_y = LoadDatasets.load_mnist(
         '../../Data/mnist/train-images.idx3-ubyte',
         '../../Data/mnist/train-labels.idx1-ubyte',
-        1000
+        100
     )
 
     test_X, test_y = LoadDatasets.load_mnist(
         '../../Data/mnist/t10k-images.idx3-ubyte',
         '../../Data/mnist/t10k-labels.idx1-ubyte',
-        1000
+        100
     )
 
-    mnist_pysh(train_X, train_y, test_X, test_y, 300, 10)
+    mnist_pysh(train_X, train_y, test_X, test_y, 100, 10)
