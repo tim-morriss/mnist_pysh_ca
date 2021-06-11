@@ -1,5 +1,7 @@
 # PyghGP / CA Image Classification
 
+<img src="https://github.com/tm224/PushGP-CA-Image-Class/blob/main/output-1.gif" width="200" />
+
 Python based project combining the PyshGP library and the cellular-automaton library with the aim of optimising update rules to allow for accurate classification.
 
 **WIP**
