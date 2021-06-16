@@ -112,13 +112,13 @@ class StateTap(Tap):
 
 if __name__ == '__main__':
     train_X, train_y = LoadDatasets.load_mnist(
-        '../../Data/mnist/train-images.idx3-ubyte',
+        '../Data/mnist/train-images.idx3-ubyte',
         '../../Data/mnist/train-labels.idx1-ubyte',
         100
     )
 
     test_X, test_y = LoadDatasets.load_mnist(
-        '../../Data/mnist/t10k-images.idx3-ubyte',
+        '../Data/mnist/t10k-images.idx3-ubyte',
         '../../Data/mnist/t10k-labels.idx1-ubyte',
         100
     )

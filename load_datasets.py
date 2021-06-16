@@ -1,5 +1,6 @@
 import numpy as np
 import tensorflow as tf
+import random
 from typing import Tuple
 from struct import unpack
 from matplotlib import pyplot as plt
@@ -8,7 +9,8 @@ from matplotlib import pyplot as plt
 class LoadDatasets:
 
     @staticmethod
-    def load_mnist(image_file: str, label_file: str, cut_size: int = 0, plot_digit: int = None) -> Tuple[np.ndarray, np.ndarray]:
+    def load_mnist(image_file: str, label_file: str, cut_size: int = 0, plot_digit: int = None) \
+            -> Tuple[np.ndarray, np.ndarray]:
         """
         Takes MNIST input files (x and y) and parses them into two numpy arrays.
         x is the images and y is the label.
@@ -66,16 +68,16 @@ class LoadDatasets:
         else:
             return X[:cut_size], y[:cut_size]
 
-
     @staticmethod
     def load_mnist_tf(cut_size: int = None, plot_digit: int = None, return_digit: int = None):
         """
         Loads the mnist dataset from the Tensorflow package.
         This is *much* faster than the load_mnist function, so is preferred if using non-edited MNIST.
-        :param cut_size:
-        :param plot_digit:
-        :param return_digit:
-        :return:
+
+        :param cut_size: How much of the dataset to return.
+        :param plot_digit: The image to plot (int).
+        :param return_digit: The digit to return (index).
+        :return: Tuple of numpy arrays.
         """
         (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
         x_train = np.array(x_train / 255.0, ).astype(np.float32)
@@ -86,6 +88,7 @@ class LoadDatasets:
 
         if return_digit is not None:
             print("Digit %s returned" % return_digit)
+            # Janky fix for the type of array that MNISTCA accepts. 
             return np.expand_dims(x_train[return_digit], axis=0), np.expand_dims(y_train[return_digit], axis=0)
         else:
             if cut_size == 0 or cut_size is None:
@@ -97,6 +100,35 @@ class LoadDatasets:
 
     @staticmethod
     def plot_mnist(image: np.array):
+        """
+        Plots an image from the MNIST dataset with matplotlib.
+
+        :param image: np.array of the image to plot.
+        """
         pixels = image.reshape((28, 28))
         plt.imshow(pixels, cmap='gray')
         plt.show()
+
+    @staticmethod
+    def exclusive_digit(x: np.ndarray, y: np.ndarray, number_to_return: int):
+        """
+        Return a specific number label only from the MNIST dataset (i.e. only 5s).
+
+        :param x: The values of the MNIST dataset.
+        :param y: The labels of the MNIST dataset.
+        :param number_to_return: The number to be returned.
+        :return:
+        """
+        y_filter = np.where((y == number_to_return))  # Filter only where y is equal to number_to_return
+        return x[y_filter], y[y_filter]  # Apply this to the two numpy arrays
+
+    @staticmethod
+    def random_digit(x, y):
+        """
+        Returns a random digit from the provided dataset.
+
+        :param x: The values of the MNIST dataset.
+        :param y: The labels of the MNIST dataset.
+        :return:
+        """
+        return np.expand_dims(random.choice(x), axis=0), np.expand_dims(random.choice(y), axis=0)
