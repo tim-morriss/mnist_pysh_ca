@@ -1,14 +1,21 @@
 import numpy as np
 import tensorflow as tf
 from cellular_automaton import CellularAutomaton, CAWindow, EdgeRule, MooreNeighborhood
+from pyshgp.push.interpreter import PushInterpreter
+
 from ca_animate import CAAnimate
 from typing import Sequence
 from load_datasets import LoadDatasets
+from pyshgp.push.program import Program
 
 
 class MNISTCA(CellularAutomaton):
 
-    def __init__(self, x, y, edge_rule=EdgeRule.FIRST_AND_LAST_CELL_OF_DIMENSION_ARE_NEIGHBORS):
+    def __init__(self,
+                 X, y,
+                 update_rule: Program,
+                 interpreter: PushInterpreter,
+                 edge_rule=EdgeRule.FIRST_AND_LAST_CELL_OF_DIMENSION_ARE_NEIGHBORS):
         """
         Modified CellularAutomaton class that specifies cell states and evolve rules for the MNIST dataset.
         :param edge_rule: The rule of the CA when dealing with edge cells.
@@ -17,11 +24,14 @@ class MNISTCA(CellularAutomaton):
             IGNORE_MISSING_NEIGHBORS_OF_EDGE_CELLS, and
             FIRST_AND_LAST_CELL_OF_DIMENSION_ARE_NEIGHBORS.
         """
-        self.x, self.y = x, y
         super().__init__(
             dimension=[27, 27],  # 28 x 28 pixels
             neighborhood=MooreNeighborhood(edge_rule)
         )
+        self.X = X
+        self.y = y
+        self.update_rule = update_rule
+        self.interpreter = interpreter
 
     def init_cell_state(self, cell_coordinate: Sequence) -> Sequence:
         """
@@ -29,7 +39,7 @@ class MNISTCA(CellularAutomaton):
         :param cell_coordinate: Coordinate of the cell to initialise.
         :return: The initialised cell.
         """
-        cell = self.x[0][cell_coordinate[0]][cell_coordinate[1]]
+        cell = self.X[0][cell_coordinate[0]][cell_coordinate[1]]
         init = cell
         return [init]
 
@@ -38,16 +48,10 @@ class MNISTCA(CellularAutomaton):
         The evolution rules for the CA.
         :param last_cell_state: The state of the cell at the preceding step of the CA.
         :param neighbors_last_states: The states of the neighbours around it (defined by the neighbourhood setting).
-        :return: The new state of the cell.
+        :return: The new state of the cell (sequence).
         """
-        alive_neighbours = []
-        for n in neighbors_last_states:
-            if n[0] > 0:
-                alive_neighbours.append(n[0])
-        if len(alive_neighbours) > 3:
-            return [np.average(alive_neighbours)]
-        else:
-            return [0]
+        value = self.interpreter.run(self.update_rule, self.X)
+        return [value]
 
 
 class DrawCA(CAWindow):
@@ -57,7 +61,8 @@ class DrawCA(CAWindow):
         self.states = []
 
     def run(self, evolutions_per_step=1, last_evolution_step=100, **kwargs):
-        self.states = [None] * last_evolution_step
+        if not self.states:
+            self.states = [None] * last_evolution_step
         while self._not_at_the_end(last_evolution_step):
             self._cellular_automaton.evolve(evolutions_per_step)
             self.update_states(self._cellular_automaton.evolution_step)
@@ -96,16 +101,33 @@ def test_number(number, cut_size, evolution_steps):
     return average_intensities
 
 
+def average_one_number(num, cut, steps):
+    filename = "average_%s.txt" % num
+    open(filename, 'w').close()  # Clear text file
+    averages = test_number(num, cut, steps)
+    with open(filename, "a") as averages_output:
+        with np.printoptions(threshold=np.inf):
+            print("Writing to file...")
+            averages_output.write("\n -------------------------------------------- \n")
+            averages_output.write("Averages for %s is: \n %s" % (num, averages))
+            averages_output.write("\n Total average is %s" % np.average(averages))
+            print("Total average is %s" % np.average(averages))
+            averages_output.write("\n -------------------------------------------- \n")
+
+
 if __name__ == '__main__':
-    open('averages.txt', 'w').close()   # Erase textfile
     for i in range(0, 10):
-        averages = test_number(i, None, 250)
-        with open("averages.txt", "a") as averages_output:
-            with np.printoptions(threshold=np.inf):
-                averages_output.write("\n -------------------------------------------- \n")
-                averages_output.write("Averages for %s is: \n %s" % (i, averages))
-                averages_output.write("\n Total average is %s" % np.average(averages))
-                averages_output.write("\n -------------------------------------------- \n")
+        average_one_number(i, None, 250)
+
+    # open('averages.txt', 'w').close()  # Erase textfile
+    # for i in range(0, 10):
+    #     averages = test_number(i, None, 250)
+    #     with open("averages.txt", "a") as averages_output:
+    #         with np.printoptions(threshold=np.inf):
+    #             averages_output.write("\n -------------------------------------------- \n")
+    #             averages_output.write("Averages for %s is: \n %s" % (i, averages))
+    #             averages_output.write("\n Total average is %s" % np.average(averages))
+    #             averages_output.write("\n -------------------------------------------- \n")
 
     # train_x, train_y = LoadDatasets.load_mnist_tf()
     # x_filter, y_filter = LoadDatasets.exclusive_digit(train_x, train_y, number_to_return=5)
