@@ -15,45 +15,6 @@ from pyshgp.validation import check_X_y
 
 from mnist_ca import MNISTCA, DrawCA
 
-
-class MNISTEstimator(PushEstimator):
-
-    def __init__(self, spawner: GeneSpawner, steps: int, *args, **kwargs):
-        super().__init__(spawner, **kwargs)
-        self.steps = steps
-
-    @tap
-    def fit(self, X, y):
-        """Run the search algorithm to synthesize a push program.
-
-                Parameters
-                ----------
-                X : pandas dataframe of shape = [n_samples, n_features]
-                    The training input samples.
-                y : list, array-like, or pandas dataframe.
-                    The target values (class labels in classification, real numbers in
-                    regression). Shape = [n_samples] or [n_samples, n_outputs]
-
-                """
-        X, y, arity, y_types = check_X_y(X, y)
-        print(y_types)
-        output_types = [self.interpreter.type_library.push_type_for_type(t).name for t in y_types]
-        if self.last_str_from_stdout:
-            ndx = list_rindex(output_types, "str")
-            if ndx is not None:
-                output_types[ndx] = "stdout"
-        self.signature = ProgramSignature(arity=arity, output_stacks=output_types, push_config=self.push_config)
-        self.evaluator = CustomFunctionEvaluator(
-            ErrorFunction.mnist_error_function,
-            X, y,
-            interpreter=self.interpreter,
-            steps=self.steps
-        )
-        self._build_search_algo()
-        self.solution = self.search.run()
-        self.search.config.tear_down()
-
-
 class ErrorFunction:
     """
 
@@ -76,12 +37,54 @@ class ErrorFunction:
         :return: returns an array with the average
         """
         print(program.pretty_str())
+        print("x before expansion: %s" % X)
         X = np.expand_dims(X, axis=0)
+        print(X.tolist())
         output = DrawCA(MNISTCA(X, y, program, interpreter)).run(steps)
         print("Output from CA: %s" % output)
         average = np.average(output[-1].reshape(-1))
         print("Average: %s" % average)
         return np.ndarray(average)
+
+
+class MNISTEstimator(PushEstimator):
+
+    def __init__(self, spawner: GeneSpawner, steps: int, *args, **kwargs):
+        super().__init__(spawner, **kwargs)
+        self.steps = steps
+
+    @tap
+    def fit(self, X, y):
+        """Run the search algorithm to synthesize a push program.
+
+                Parameters
+                ----------
+                X : pandas dataframe of shape = [n_samples, n_features]
+                    The training input samples.
+                y : list, array-like, or pandas dataframe.
+                    The target values (class labels in classification, real numbers in
+                    regression). Shape = [n_samples] or [n_samples, n_outputs]
+
+                """
+        X, y, arity, y_types = check_X_y(X, y)
+        # Set the output types for the pysh programs.
+        output_types = [self.interpreter.type_library.push_type_for_type(t).name for t in y_types]
+        if self.last_str_from_stdout:
+            ndx = list_rindex(output_types, "str")
+            if ndx is not None:
+                output_types[ndx] = "stdout"
+        # Create signature for the estimator
+        self.signature = ProgramSignature(arity=arity, output_stacks=output_types, push_config=self.push_config)
+        # Initialise the evaluator with error function, x and y, interpreter and steps.
+        self.evaluator = CustomFunctionEvaluator(
+            ErrorFunction.mnist_error_function,
+            X, y,
+            interpreter=self.interpreter,
+            steps=self.steps
+        )
+        self._build_search_algo()
+        self.solution = self.search.run()
+        self.search.config.tear_down()
 
 
 class CustomFunctionEvaluator(Evaluator):
@@ -93,7 +96,9 @@ class CustomFunctionEvaluator(Evaluator):
                  penalty: float = 1e6,
                  steps: int = 100):
         super().__init__(interpreter, penalty)
+        print("Before dataframe %s" % X.tolist())
         self.X = pd.DataFrame(X)
+        # print("X dataframe: %s" % self.X)
         self.y = pd.DataFrame(y)
         self.error_function = error_function
         self.steps = steps
@@ -112,7 +117,7 @@ class CustomFunctionEvaluator(Evaluator):
         # Work through the input and run error function on each one
         for ndx in range(self.X.shape[0]):
             inputs = self.X.iloc[ndx].to_list()
-            output = self.error_function.mnist_error_function(
+            output = self.error_function(
                 program,
                 self.X, self.y,
                 self.interpreter,

@@ -94,6 +94,7 @@ To get the true output for the data sets, we will use the "target_function" func
 """
 
 X = [[Rectangle(row[0], row[1]), Rectangle(row[2], row[3])] for row in np.random.rand(20, 4)]
+print(X)
 y = [[area_difference(r[0], r[1])] for r in X]
 
 """

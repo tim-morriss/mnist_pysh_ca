@@ -17,7 +17,7 @@ from pyshgp.tap import Tap, TapManager
 from mnist_estimator import MNISTEstimator
 
 
-def mnist_pysh_ca(pop_size=500, gens=100):
+def mnist_pysh_ca(pop_size=500, gens=100, steps=10, cut_size=None, digits=None):
     spawner = GeneSpawner(
         # Number of input instructions that could appear in the genomes.
         n_inputs=1,
@@ -40,10 +40,16 @@ def mnist_pysh_ca(pop_size=500, gens=100):
         selector=WackySelector(),
         variation_strategy="umad",
         last_str_from_stdout=True,
-        verbose=2
+        verbose=2,
+        steps=steps
     )
 
     X, y = LoadDatasets.load_mnist_tf()
+    y = np.int64(y)     # for some reason pyshgp won't accept uint8, so cast to int64.
+    X = X.reshape(-1, 784)
+    y = y.reshape(-1, 1)
+    X, y = LoadDatasets.exclusive_digits(X, y, digits, cut_size)
+
     # X = train_x
     # y = [[label] for label in train_y]
     # test_y_2d = [[label] for label in test_y]
@@ -129,3 +135,6 @@ class StateTap(Tap):
 #     return abs(bin_label[0] - bin_label[1])
 
 # class StateTap(Tap):
+
+if __name__ == '__main__':
+    mnist_pysh_ca(pop_size=10, gens=10, steps=10, cut_size=10, digits=[1, 2])

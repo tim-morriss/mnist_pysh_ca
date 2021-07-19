@@ -6,6 +6,7 @@ from pyshgp.push.instruction_set import InstructionSet
 from pyshgp.gp.estimators import PushEstimator
 from pyshgp.gp.genome import GeneSpawner
 from pyshgp.tap import Tap, TapManager
+from pyshgp.validation import check_X_y
 
 # A sample of the famous Iris dataset.
 data = pd.DataFrame(
@@ -78,6 +79,8 @@ if __name__ == "__main__":
 
     x = data[["sepal_length", "sepal_width", "petal_length", "petal_width"]]
     y = data[["label"]]
+    # temp_x, temp_y, arity, y_types = check_X_y(x, y)
+    # print(y_types)
     print("X: %s \n y: %s" % (x, y))
 
     TapManager.register("pyshgp.gp.search.SearchAlgorithm.step", MyCustomTap())

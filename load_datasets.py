@@ -123,6 +123,29 @@ class LoadDatasets:
         return x[y_filter], y[y_filter]  # Apply this to the two numpy arrays
 
     @staticmethod
+    def exclusive_digits(x: np.ndarray, y: np.ndarray, numbers_to_return: list, cut_size: int = None):
+        """
+        Returns a number of samples belonging to specified labels.
+
+        :param x: The values of the MNIST dataset.
+        :param y: The labels of the MNISt dataset.
+        :param numbers_to_return: The numbers to return.
+        :param cut_size: How many of each label to return
+        :return:
+        """
+        temp_x = []
+        temp_y = []
+        for num in numbers_to_return:
+            x_1, y_1 = LoadDatasets.exclusive_digit(x, y, num)
+            temp_x.append(x_1)
+            temp_y.append(y_1)
+
+        if cut_size is not None:
+            return temp_x[:cut_size], temp_y[:cut_size]
+        else:
+            return temp_x, temp_y
+
+    @staticmethod
     def random_digit(x, y):
         """
         Returns a random digit from the provided dataset.
