@@ -82,7 +82,7 @@ class MNISTEstimator(PushEstimator):
             interpreter=self.interpreter,
             steps=self.steps
         )
-        self._build_search_algo()
+        self._build_search_algo()S
         self.solution = self.search.run()
         self.search.config.tear_down()
 
