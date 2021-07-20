@@ -110,7 +110,7 @@ class LoadDatasets:
         plt.show()
 
     @staticmethod
-    def exclusive_digit(x: np.ndarray, y: np.ndarray, number_to_return: int):
+    def exclusive_digit(x: np.ndarray, y: np.ndarray, number_to_return: int) -> Tuple[np.ndarray, np.ndarray]:
         """
         Return a specific number label only from the MNIST dataset (i.e. only 5s).
 
@@ -120,10 +120,11 @@ class LoadDatasets:
         :return:
         """
         y_filter = np.where((y == number_to_return))  # Filter only where y is equal to number_to_return
-        return x[y_filter], y[y_filter]  # Apply this to the two numpy arrays
+        return np.array(x[y_filter[0]]), np.array(y[y_filter[0]])  # Apply this to the two numpy arrays
 
     @staticmethod
-    def exclusive_digits(x: np.ndarray, y: np.ndarray, numbers_to_return: list, cut_size: int = None):
+    def exclusive_digits(x: np.ndarray, y: np.ndarray, numbers_to_return: list, cut_size: int = None) \
+            -> Tuple[np.ndarray, np.ndarray]:
         """
         Returns a number of samples belonging to specified labels.
 
@@ -133,17 +134,19 @@ class LoadDatasets:
         :param cut_size: How many of each label to return
         :return:
         """
-        temp_x = []
-        temp_y = []
+        temp_x = np.empty([0, x.shape[1]])
+        # print("temp shape: %s" % str(temp_x.shape))
+        temp_y = np.empty([0, y.shape[1]])
         for num in numbers_to_return:
             x_1, y_1 = LoadDatasets.exclusive_digit(x, y, num)
-            temp_x.append(x_1)
-            temp_y.append(y_1)
+            if cut_size is not None:
+                temp_x = np.append(temp_x, x_1[:cut_size], axis=0)
+                temp_y = np.append(temp_y, y_1[:cut_size], axis=0)
+            else:
+                temp_x = np.append(temp_x, x_1, axis=0)
+                temp_y = np.append(temp_y, y_1, axis=0)
 
-        if cut_size is not None:
-            return temp_x[:cut_size], temp_y[:cut_size]
-        else:
-            return temp_x, temp_y
+        return temp_x, temp_y
 
     @staticmethod
     def random_digit(x, y):

@@ -1,9 +1,7 @@
 import numpy as np
-import tensorflow as tf
 from cellular_automaton import CellularAutomaton, CAWindow, EdgeRule, MooreNeighborhood
 from pyshgp.push.interpreter import PushInterpreter
 
-from ca_animate import CAAnimate
 from typing import Sequence
 from load_datasets import LoadDatasets
 from pyshgp.push.program import Program
@@ -12,7 +10,7 @@ from pyshgp.push.program import Program
 class MNISTCA(CellularAutomaton):
 
     def __init__(self,
-                 X, y,
+                 x, y,
                  update_rule: Program,
                  interpreter: PushInterpreter,
                  edge_rule=EdgeRule.FIRST_AND_LAST_CELL_OF_DIMENSION_ARE_NEIGHBORS):
@@ -28,7 +26,10 @@ class MNISTCA(CellularAutomaton):
             dimension=[27, 27],  # 28 x 28 pixels
             neighborhood=MooreNeighborhood(edge_rule)
         )
-        self.X = X
+        self.x = x
+        print("self x: %s" % self.x)
+        self.x = self.x.reshape([-1, 28, 28])
+        print("self x: %s" % self.x)
         self.y = y
         self.update_rule = update_rule
         self.interpreter = interpreter
@@ -39,7 +40,7 @@ class MNISTCA(CellularAutomaton):
         :param cell_coordinate: Coordinate of the cell to initialise.
         :return: The initialised cell.
         """
-        cell = self.X[0][cell_coordinate[0]][cell_coordinate[1]]
+        cell = self.x[0][cell_coordinate[0]][cell_coordinate[1]]
         init = cell
         return [init]
 
@@ -50,7 +51,7 @@ class MNISTCA(CellularAutomaton):
         :param neighbors_last_states: The states of the neighbours around it (defined by the neighbourhood setting).
         :return: The new state of the cell (sequence).
         """
-        value = self.interpreter.run(self.update_rule, self.X)
+        value = self.interpreter.run(self.update_rule, self.x)
         return [value]
 
 

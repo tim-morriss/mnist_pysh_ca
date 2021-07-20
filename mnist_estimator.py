@@ -15,7 +15,9 @@ from pyshgp.validation import check_X_y
 
 from mnist_ca import MNISTCA, DrawCA
 
+
 class ErrorFunction:
+
     """
 
     """
@@ -37,9 +39,8 @@ class ErrorFunction:
         :return: returns an array with the average
         """
         print(program.pretty_str())
-        print("x before expansion: %s" % X)
-        X = np.expand_dims(X, axis=0)
-        print(X.tolist())
+        # X = np.expand_dims(X, axis=0)
+        # print("expanded x: %s" % X)
         output = DrawCA(MNISTCA(X, y, program, interpreter)).run(steps)
         print("Output from CA: %s" % output)
         average = np.average(output[-1].reshape(-1))
@@ -77,12 +78,12 @@ class MNISTEstimator(PushEstimator):
         self.signature = ProgramSignature(arity=arity, output_stacks=output_types, push_config=self.push_config)
         # Initialise the evaluator with error function, x and y, interpreter and steps.
         self.evaluator = CustomFunctionEvaluator(
-            ErrorFunction.mnist_error_function,
-            X, y,
+            error_function=ErrorFunction(),
+            X=X, y=y,
             interpreter=self.interpreter,
             steps=self.steps
         )
-        self._build_search_algo()S
+        self._build_search_algo()
         self.solution = self.search.run()
         self.search.config.tear_down()
 
@@ -96,9 +97,7 @@ class CustomFunctionEvaluator(Evaluator):
                  penalty: float = 1e6,
                  steps: int = 100):
         super().__init__(interpreter, penalty)
-        print("Before dataframe %s" % X.tolist())
         self.X = pd.DataFrame(X)
-        # print("X dataframe: %s" % self.X)
         self.y = pd.DataFrame(y)
         self.error_function = error_function
         self.steps = steps
@@ -117,7 +116,7 @@ class CustomFunctionEvaluator(Evaluator):
         # Work through the input and run error function on each one
         for ndx in range(self.X.shape[0]):
             inputs = self.X.iloc[ndx].to_list()
-            output = self.error_function(
+            output = self.error_function.mnist_error_function(
                 program,
                 self.X, self.y,
                 self.interpreter,

@@ -23,7 +23,7 @@ def mnist_pysh_ca(pop_size=500, gens=100, steps=10, cut_size=None, digits=None):
         n_inputs=1,
         instruction_set="core",
         # A list of Literal objects to pull from when spawning genes and genomes.
-        literals=[0, 1],
+        literals=digits,
         # A list of functions (aka Ephemeral Random Constant generators).
         # When one of these functions is called, the output is placed in a Literal and returned as the spawned gene.
         erc_generators=[lambda: random.randint(0, 10)]
@@ -46,17 +46,15 @@ def mnist_pysh_ca(pop_size=500, gens=100, steps=10, cut_size=None, digits=None):
 
     X, y = LoadDatasets.load_mnist_tf()
     y = np.int64(y)     # for some reason pyshgp won't accept uint8, so cast to int64.
-    X = X.reshape(-1, 784)
-    y = y.reshape(-1, 1)
+    X = X.reshape((-1, 784))
+    y = y.reshape((-1, 1))
     X, y = LoadDatasets.exclusive_digits(X, y, digits, cut_size)
+    # print(X.shape)
 
-    # X = train_x
-    # y = [[label] for label in train_y]
-    # test_y_2d = [[label] for label in test_y]
     # print("X: %s \n y: %s" % (X[0], y))
 
-    TapManager.register("pyshgp.gp.search.SearchAlgorithm.step", MyCustomTap())
-    TapManager.register("pyshgp.push.interpreter.PushInterpreter.run", StateTap())
+    # TapManager.register("pyshgp.gp.search.SearchAlgorithm.step", MyCustomTap())
+    # TapManager.register("pyshgp.push.interpreter.PushInterpreter.run", StateTap())
 
     estimator.fit(X=X, y=y)
 
