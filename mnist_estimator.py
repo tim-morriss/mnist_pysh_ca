@@ -39,9 +39,10 @@ class ErrorFunction:
         :return: returns an array with the average
         """
         print(program.pretty_str())
-        # X = np.expand_dims(X, axis=0)
+        X = np.expand_dims(X, axis=0)
         # print("expanded x: %s" % X)
-        output = DrawCA(MNISTCA(X, y, program, interpreter)).run(steps)
+        mnist_ca = MNISTCA(X, y, program, interpreter)
+        output = DrawCA(mnist_ca).run(steps)
         print("Output from CA: %s" % output)
         average = np.average(output[-1].reshape(-1))
         print("Average: %s" % average)

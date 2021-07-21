@@ -1,8 +1,13 @@
+from enum import Enum
+
 import numpy as np
 from cellular_automaton import CellularAutomaton, CAWindow, EdgeRule, MooreNeighborhood
 from pyshgp.push.interpreter import PushInterpreter
 
 from typing import Sequence
+
+from pyshgp.utils import Token
+
 from load_datasets import LoadDatasets
 from pyshgp.push.program import Program
 
@@ -22,17 +27,16 @@ class MNISTCA(CellularAutomaton):
             IGNORE_MISSING_NEIGHBORS_OF_EDGE_CELLS, and
             FIRST_AND_LAST_CELL_OF_DIMENSION_ARE_NEIGHBORS.
         """
+        self.x = x
+        self.x = self.x.reshape([-1, 28, 28])
+        print("self x: {0}".format(self.x.shape))
+        self.y = y
+        self.update_rule = update_rule
+        self.interpreter = interpreter
         super().__init__(
             dimension=[27, 27],  # 28 x 28 pixels
             neighborhood=MooreNeighborhood(edge_rule)
         )
-        self.x = x
-        print("self x: %s" % self.x)
-        self.x = self.x.reshape([-1, 28, 28])
-        print("self x: %s" % self.x)
-        self.y = y
-        self.update_rule = update_rule
-        self.interpreter = interpreter
 
     def init_cell_state(self, cell_coordinate: Sequence) -> Sequence:
         """
@@ -52,6 +56,9 @@ class MNISTCA(CellularAutomaton):
         :return: The new state of the cell (sequence).
         """
         value = self.interpreter.run(self.update_rule, self.x)
+        if isinstance(value, Enum):
+            value = 0
+            print("code gets here and value is: {0}".format(value))
         return [value]
 
 
@@ -77,6 +84,7 @@ class DrawCA(CAWindow):
             # print("Coordinate: %s, state: %s" % (coordinate, cell.state))
             if self.states[evolution_step - 1] is None:
                 self.states[evolution_step - 1] = np.zeros((28, 28), dtype=np.float32)
+            print("cell state: {0}".format(cell.state[0]))
             self.states[evolution_step - 1][coordinate[0]][coordinate[1]] = cell.state[0]
 
 
