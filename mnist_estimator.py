@@ -13,7 +13,7 @@ from pyshgp.gp.evaluation import Evaluator, FunctionEvaluator
 from pyshgp.push.interpreter import PushInterpreter
 from pyshgp.validation import check_X_y
 
-from mnist_ca import MNISTCA, DrawCA
+from mnist_ca import MNISTCA, RunCA
 
 
 class ErrorFunction:
@@ -27,7 +27,7 @@ class ErrorFunction:
             program: Program,
             X, y,
             interpreter: PushInterpreter,
-            steps: int = 100) -> np.ndarray:
+            steps: int = 100) -> float:
         """
         Takes a single X and y value and runs them through a CA.
 
@@ -38,15 +38,13 @@ class ErrorFunction:
         :param steps: how many steps of the CA are needed
         :return: returns an array with the average
         """
-        print(program.pretty_str())
+        # print(program.pretty_str())
         X = np.expand_dims(X, axis=0)
-        # print("expanded x: %s" % X)
-        mnist_ca = MNISTCA(X, y, program, interpreter)
-        output = DrawCA(mnist_ca).run(steps)
-        print("Output from CA: %s" % output)
+        output = RunCA(MNISTCA(X, y, program, interpreter)).run(last_evolution_step=steps)
+        # print("Output from CA: {0}".format(output.shape))
         average = np.average(output[-1].reshape(-1))
-        print("Average: %s" % average)
-        return np.ndarray(average)
+        # print("Average: {0}".format(average))
+        return average
 
 
 class MNISTEstimator(PushEstimator):
@@ -76,7 +74,7 @@ class MNISTEstimator(PushEstimator):
             if ndx is not None:
                 output_types[ndx] = "stdout"
         # Create signature for the estimator
-        self.signature = ProgramSignature(arity=arity, output_stacks=output_types, push_config=self.push_config)
+        self.signature = ProgramSignature(arity=1, output_stacks=output_types, push_config=self.push_config)
         # Initialise the evaluator with error function, x and y, interpreter and steps.
         self.evaluator = CustomFunctionEvaluator(
             error_function=ErrorFunction(),
@@ -116,14 +114,17 @@ class CustomFunctionEvaluator(Evaluator):
         errors = []
         # Work through the input and run error function on each one
         for ndx in range(self.X.shape[0]):
-            inputs = self.X.iloc[ndx].to_list()
+            input_x = self.X.iloc[ndx]
+            input_y = self.y.iloc[ndx]
+            # print(input_x)
             output = self.error_function.mnist_error_function(
                 program,
-                self.X, self.y,
+                input_x, input_y,
                 self.interpreter,
                 self.steps
             )
             errors.append(optimal_number - output)
+            # print(errors)
         return np.array(errors).flatten()
 
 # class FitnessMNIST(Evaluator):

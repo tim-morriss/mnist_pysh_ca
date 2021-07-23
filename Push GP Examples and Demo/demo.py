@@ -153,8 +153,16 @@ class MyCustomTap(Tap):
         print("Best Total Error:", best_individual.total_error)
 
 
-TapManager.register("pyshgp.gp.search.SearchAlgorithm.step", MyCustomTap())
+class StateTap(Tap):
 
+    def pre(self, id, args, kwargs, obj=None):
+        interpreter = args[0]
+        print(args)
+        print("Initial state: {0}".format(interpreter.state.pretty_print()))
+
+
+TapManager.register("pyshgp.gp.search.SearchAlgorithm.step", MyCustomTap())
+# TapManager.register("pyshgp.push.PushInterpreter.run", StateTap())
 
 """
 Now let's kick off our PushGP run!

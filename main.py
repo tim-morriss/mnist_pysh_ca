@@ -3,7 +3,7 @@ import random
 import numpy as np
 
 from load_datasets import LoadDatasets
-from mnist_ca import MNISTCA, DrawCA
+from mnist_ca import MNISTCA, RunCA
 from typing import Sequence
 from pyshgp.gp.individual import Individual
 from pyshgp.gp.genome import GeneSpawner
@@ -18,12 +18,23 @@ from mnist_estimator import MNISTEstimator
 
 
 def mnist_pysh_ca(pop_size=500, gens=100, steps=10, cut_size=None, digits=None):
+    """
+    Function to create and run the pyshGP + CA system
+
+    @param pop_size: The size of the population in the GP algorithm
+    @param gens: The amount of generations that the GP program will run for
+    @param steps: The number of steps of CA update that will happen
+    @param cut_size: The number of each digit of the MNIST dataset to include
+    @param digits: The digits to include
+    """
     spawner = GeneSpawner(
         # Number of input instructions that could appear in the genomes.
         n_inputs=1,
-        instruction_set="core",
+        # instruction_set="core",
+        instruction_set=InstructionSet().register_core_by_stack({"bool", "int", "float"}),
         # A list of Literal objects to pull from when spawning genes and genomes.
-        literals=digits,
+        # literals=[np.float64(x) for x in digits],
+        literals=[],
         # A list of functions (aka Ephemeral Random Constant generators).
         # When one of these functions is called, the output is placed in a Literal and returned as the spawned gene.
         erc_generators=[lambda: random.randint(0, 10)]
@@ -49,12 +60,11 @@ def mnist_pysh_ca(pop_size=500, gens=100, steps=10, cut_size=None, digits=None):
     X = X.reshape((-1, 784))
     y = y.reshape((-1, 1))
     X, y = LoadDatasets.exclusive_digits(X, y, digits, cut_size)
-    # print(X.shape)
 
     # print("X: %s \n y: %s" % (X[0], y))
 
-    # TapManager.register("pyshgp.gp.search.SearchAlgorithm.step", MyCustomTap())
-    # TapManager.register("pyshgp.push.interpreter.PushInterpreter.run", StateTap())
+    TapManager.register("pyshgp.gp.search.SearchAlgorithm.step", MyCustomTap())
+    TapManager.register("pyshgp.push.interpreter.PushInterpreter.run", StateTap())
 
     estimator.fit(X=X, y=y)
 
@@ -114,8 +124,11 @@ class MyCustomTap(Tap):
 class StateTap(Tap):
 
     def pre(self, id, args, kwargs):
+        interpreter = args[0]
+        # print("Program: {0}".format(interpreter.program.pretty_str()))
+        # print("Interpreter type library: {0}".format(interpreter.type_library))
+        # print("Interpreter state: {0}".format(interpreter.state.pretty_print()))
         pass
-
 
 # def fitness_function(individual, x, y, n):
 #     average_intensities = {}
@@ -135,4 +148,4 @@ class StateTap(Tap):
 # class StateTap(Tap):
 
 if __name__ == '__main__':
-    mnist_pysh_ca(pop_size=10, gens=10, steps=10, cut_size=10, digits=[1, 2])
+    mnist_pysh_ca(pop_size=300, gens=100, steps=10, cut_size=10, digits=[1, 2])

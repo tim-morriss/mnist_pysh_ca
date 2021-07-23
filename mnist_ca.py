@@ -29,7 +29,7 @@ class MNISTCA(CellularAutomaton):
         """
         self.x = x
         self.x = self.x.reshape([-1, 28, 28])
-        print("self x: {0}".format(self.x.shape))
+        # print("self x: {0}".format(self.x.shape))
         self.y = y
         self.update_rule = update_rule
         self.interpreter = interpreter
@@ -55,22 +55,32 @@ class MNISTCA(CellularAutomaton):
         :param neighbors_last_states: The states of the neighbours around it (defined by the neighbourhood setting).
         :return: The new state of the cell (sequence).
         """
-        value = self.interpreter.run(self.update_rule, self.x)
+        # print(self.x.shape)
+        # temp_x = self.x.reshape(784).tolist()
+        # temp_x = last_cell_state
+        # print("last_cell_state: {0} and of type: {1}".format(last_cell_state, type(last_cell_state)))
+        value = self.interpreter.run(self.update_rule, last_cell_state, print_trace=False)
+        # print("Value: {0}".format(value))
+        if isinstance(value, list):
+            value = value[0]
         if isinstance(value, Enum):
             value = 0
-            print("code gets here and value is: {0}".format(value))
+            # print("code gets here and value is: {0}".format(value))
         return [value]
 
 
-class DrawCA(CAWindow):
+class RunCA(CAWindow):
+    """
+    Class for running the CA. Adapted from CAWindow but avoids using PyGame for visualisation.
+    """
 
     def __init__(self, cellular_automaton: CellularAutomaton):
         self._cellular_automaton = cellular_automaton
-        self.states = []
+        self.states = np.empty(0)
 
     def run(self, evolutions_per_step=1, last_evolution_step=100, **kwargs):
-        if not self.states:
-            self.states = [None] * last_evolution_step
+        # Initialise self.states with the specified number of empty arrays.
+        self.states = np.zeros([last_evolution_step, 28, 28], dtype=np.float32)
         while self._not_at_the_end(last_evolution_step):
             self._cellular_automaton.evolve(evolutions_per_step)
             self.update_states(self._cellular_automaton.evolution_step)
@@ -80,53 +90,54 @@ class DrawCA(CAWindow):
         return self._cellular_automaton.get_cells()
 
     def update_states(self, evolution_step):
+        # For each cell and co-ordinate in the CA update the corresponding point in self.states.
         for coordinate, cell in self._cellular_automaton.cells.items():
             # print("Coordinate: %s, state: %s" % (coordinate, cell.state))
-            if self.states[evolution_step - 1] is None:
-                self.states[evolution_step - 1] = np.zeros((28, 28), dtype=np.float32)
-            print("cell state: {0}".format(cell.state[0]))
+            # if self.states[evolution_step - 1] is None:
+                # self.states[evolution_step - 1] = np.zeros((28, 28), dtype=np.float32)
+            # print("cell state: {0}".format(cell.state[0]))
             self.states[evolution_step - 1][coordinate[0]][coordinate[1]] = cell.state[0]
 
 
-def test_number(number, cut_size, evolution_steps):
-    print()
-    print("--------------------------------------------")
-    print("Loading MNIST dataset...")
-    train_x, train_y = LoadDatasets.load_mnist_tf(cut_size=cut_size)
-    print("Filter MNIST images to only include the label %s" % number)
-    x_filter, y_filter = LoadDatasets.exclusive_digit(train_x, train_y, number_to_return=number)
-    average_intensities = np.zeros(0)
-    i = 0
-    for (x, y) in zip(x_filter, y_filter):
-        # print()
-        # print("Evolving the %s label..." % i)
-        x = np.expand_dims(x, axis=0)
-        y = np.expand_dims(y, axis=0)
-        evolution = DrawCA(MNISTCA(x, y)).run(last_evolution_step=evolution_steps)
-        average = np.average(evolution[-1].reshape(-1))
-        print("Average for %s was %s" % (i, average))
-        average_intensities = np.append(average_intensities, average)
-        i += 1
-    return average_intensities
-
-
-def average_one_number(num, cut, steps):
-    filename = "average_%s.txt" % num
-    open(filename, 'w').close()  # Clear text file
-    averages = test_number(num, cut, steps)
-    with open(filename, "a") as averages_output:
-        with np.printoptions(threshold=np.inf):
-            print("Writing to file...")
-            averages_output.write("\n -------------------------------------------- \n")
-            averages_output.write("Averages for %s is: \n %s" % (num, averages))
-            averages_output.write("\n Total average is %s" % np.average(averages))
-            print("Total average is %s" % np.average(averages))
-            averages_output.write("\n -------------------------------------------- \n")
-
-
-if __name__ == '__main__':
-    for i in range(0, 10):
-        average_one_number(i, None, 250)
+# def test_number(number, cut_size, evolution_steps):
+#     print()
+#     print("--------------------------------------------")
+#     print("Loading MNIST dataset...")
+#     train_x, train_y = LoadDatasets.load_mnist_tf(cut_size=cut_size)
+#     print("Filter MNIST images to only include the label %s" % number)
+#     x_filter, y_filter = LoadDatasets.exclusive_digit(train_x, train_y, number_to_return=number)
+#     average_intensities = np.zeros(0)
+#     i = 0
+#     for (x, y) in zip(x_filter, y_filter):
+#         # print()
+#         # print("Evolving the %s label..." % i)
+#         x = np.expand_dims(x, axis=0)
+#         y = np.expand_dims(y, axis=0)
+#         evolution = RunCA(MNISTCA(x, y)).run(last_evolution_step=evolution_steps)
+#         average = np.average(evolution[-1].reshape(-1))
+#         print("Average for %s was %s" % (i, average))
+#         average_intensities = np.append(average_intensities, average)
+#         i += 1
+#     return average_intensities
+#
+#
+# def average_one_number(num, cut, steps):
+#     filename = "average_%s.txt" % num
+#     open(filename, 'w').close()  # Clear text file
+#     averages = test_number(num, cut, steps)
+#     with open(filename, "a") as averages_output:
+#         with np.printoptions(threshold=np.inf):
+#             print("Writing to file...")
+#             averages_output.write("\n -------------------------------------------- \n")
+#             averages_output.write("Averages for %s is: \n %s" % (num, averages))
+#             averages_output.write("\n Total average is %s" % np.average(averages))
+#             print("Total average is %s" % np.average(averages))
+#             averages_output.write("\n -------------------------------------------- \n")
+#
+#
+# if __name__ == '__main__':
+#     for i in range(0, 10):
+#         average_one_number(i, None, 250)
 
     # open('averages.txt', 'w').close()  # Erase textfile
     # for i in range(0, 10):
