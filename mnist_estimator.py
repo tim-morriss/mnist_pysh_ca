@@ -1,15 +1,12 @@
-from typing import Union, Callable
-
 import numpy as np
 import pandas as pd
 
 from pyshgp.gp.estimators import PushEstimator
 from pyshgp.gp.genome import GeneSpawner
-from pyshgp.push.instruction_set import InstructionSet
 from pyshgp.tap import tap
 from pyshgp.utils import list_rindex
 from pyshgp.push.program import ProgramSignature, Program
-from pyshgp.gp.evaluation import Evaluator, FunctionEvaluator
+from pyshgp.gp.evaluation import Evaluator
 from pyshgp.push.interpreter import PushInterpreter
 from pyshgp.validation import check_X_y
 
@@ -19,7 +16,7 @@ from mnist_ca import MNISTCA, RunCA
 class ErrorFunction:
 
     """
-
+    Custom ErrorFunction for use with CustomFunctionEvaluator.
     """
 
     @staticmethod
@@ -31,17 +28,24 @@ class ErrorFunction:
         """
         Takes a single X and y value and runs them through a CA.
 
-        :param program: a individual push program
-        :param X: one array of x
-        :param y: its corresponding label
-        :param interpreter: the PushInterpreter
-        :param steps: how many steps of the CA are needed
-        :return: returns an array with the average
+        Parameters
+        ----------
+        program: Program
+            An individual push program
+        X: numpy array
+            Np.array of one mnist digit
+        y: numpy array
+            Label of digit
+        interpreter: PushInterpreter
+            Interpreter used to run the individual push programs
+        steps int, optional
+            The number of steps of the CA to execute per evolution
         """
         # print(program.pretty_str())
         X = np.expand_dims(X, axis=0)
         output = RunCA(MNISTCA(X, y, program, interpreter)).run(last_evolution_step=steps)
         # print("Output from CA: {0}".format(output.shape))
+        # Average just the last grid state.
         average = np.average(output[-1].reshape(-1))
         # print("Average: {0}".format(average))
         return average
@@ -50,22 +54,34 @@ class ErrorFunction:
 class MNISTEstimator(PushEstimator):
 
     def __init__(self, spawner: GeneSpawner, steps: int, *args, **kwargs):
+        """
+
+        Parameters
+        ----------
+        spawner: GeneSpawner
+            Used to spawn individuals.
+        steps: int
+            Number of steps of evolution of the CA grid.
+        args
+        kwargs
+        """
         super().__init__(spawner, **kwargs)
         self.steps = steps
 
     @tap
     def fit(self, X, y):
-        """Run the search algorithm to synthesize a push program.
+        """
+        Runs and optimises the population of Push programs.
+        Optimises based on error function.
 
-                Parameters
-                ----------
-                X : pandas dataframe of shape = [n_samples, n_features]
-                    The training input samples.
-                y : list, array-like, or pandas dataframe.
-                    The target values (class labels in classification, real numbers in
-                    regression). Shape = [n_samples] or [n_samples, n_outputs]
-
-                """
+        Parameters
+        ----------
+        X: pandas dataframe of shape = [n_samples, n_features]
+            The training input samples.
+        y: list, array-like, or pandas dataframe.
+            The target values (class labels in classification, real numbers in
+            regression). Shape = [n_samples] or [n_samples, n_outputs]
+        """
         X, y, arity, y_types = check_X_y(X, y)
         # Set the output types for the pysh programs.
         output_types = [self.interpreter.type_library.push_type_for_type(t).name for t in y_types]
@@ -95,6 +111,26 @@ class CustomFunctionEvaluator(Evaluator):
                  interpreter: PushInterpreter = "default",
                  penalty: float = 1e6,
                  steps: int = 100):
+        """
+
+        Parameters
+        ----------
+        error_function: ErrorFunction object
+        X: pandas dataframe of shape = [n_samples, n_features]
+            The training input samples.
+        y: list, array-like, or pandas dataframe.
+            The target values (class labels in classification, real numbers in
+            regression). Shape = [n_samples] or [n_samples, n_outputs]
+        interpreter: PushInterpreter, optional
+            PushInterpreter used to run program and get their output. Default is
+            an interpreter with the default configuration and all core instructions
+            registered.
+        penalty: float, optional
+            When a program's output cannot be evaluated on a particular case, the
+            penalty error is assigned. Default is 5e5.
+        steps: int, optional
+            Number of steps of evolution of the CA grid.
+        """
         super().__init__(interpreter, penalty)
         self.X = pd.DataFrame(X)
         self.y = pd.DataFrame(y)
@@ -102,13 +138,21 @@ class CustomFunctionEvaluator(Evaluator):
         self.steps = steps
 
     @tap
-    def evaluate(self, program: Program, optimal_number: float = 1) -> np.ndarray:
+    def evaluate(self, program: Program, optimal_number: float = None) -> np.ndarray:
         """
         Works through each sample in the input and runs it with the individual (program).
 
-        :param program: a push program to be evaluated.
-        :param optimal_number: the number to optimise to.
-        :return: the error vector
+        Parameters
+        ----------
+        program: Program
+            A push program to be evaluated.
+        optimal_number: float, optional
+            The number to optimise to.
+
+        Returns
+        -------
+        np.array
+            The error vector for every sample in the dataset.
         """
         super().evaluate(program)
         errors = []
@@ -123,42 +167,12 @@ class CustomFunctionEvaluator(Evaluator):
                 self.interpreter,
                 self.steps
             )
-            errors.append(optimal_number - output)
+            # Idea is to try and optimise the average of the grid after the evolutions to the y label.
+            # This might be redundant as not sure if optimal_number strategy is useful
+            if not optimal_number:
+                errors.append(input_y - output)
+            else:
+                errors.append(optimal_number - output)
             # print(errors)
         return np.array(errors).flatten()
-
-# class FitnessMNIST(Evaluator):
-#
-#     def __init__(self, X, y, interpreter: PushInterpreter, penalty: float = 1e6):
-#         super().__init__(penalty=penalty)
-#         self.X = pd.DataFrame(X)
-#         self.y = pd.DataFrame(y)
-#         self.interpreter = interpreter
-#
-#     @tap
-#     def evaluate(self, program: Program) -> np.ndarray:
-#         super().evaluate(program)
-#         errors = []
-#         for ndx in range(self.X.shape[0]):
-#             inputs = self.X.iloc[ndx].to_list()
-#             expected = self.y.iloc[ndx].to_list()
-#             actual = self.interpreter.run(program, inputs)
-#             errors.append(self.default_error_function(actual, expected))
-#         return np.array(errors).flatten()
-#
-#
-# class MNISTInterpreter(PushInterpreter):
-#
-#     def __init__(self,
-#                  instruction_set: Union[InstructionSet, str] = "core",
-#                  reset_on_run: bool = True):
-#         super().__init__(instruction_set, reset_on_run)
-#
-#
-#     @tap
-#     def run(self,
-#             program: Program,
-#             inputs: list,
-#             print_tract: bool = False) -> list:
-#         pass
 

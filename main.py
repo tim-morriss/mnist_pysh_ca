@@ -3,12 +3,12 @@ import random
 import numpy as np
 
 from load_datasets import LoadDatasets
-from mnist_ca import MNISTCA, RunCA
+# from mnist_ca import MNISTCA, RunCA
 from typing import Sequence
 from pyshgp.gp.individual import Individual
 from pyshgp.gp.genome import GeneSpawner
 from pyshgp.push.instruction_set import InstructionSet
-from pyshgp.gp.estimators import PushEstimator
+# from pyshgp.gp.estimators import PushEstimator
 # from pyshgp.gp.selection import Lexicase
 from pyshgp.monitoring import VerbosityConfig
 from pyshgp.gp.selection import Selector
@@ -31,14 +31,14 @@ def mnist_pysh_ca(pop_size=500, gens=100, steps=10, cut_size=None, digits=None):
         # Number of input instructions that could appear in the genomes.
         n_inputs=1,
         # instruction_set="core",
-        instruction_set=InstructionSet().register_core_by_stack({"bool", "int", "float"}),
+        instruction_set=InstructionSet().register_core_by_stack({"float"}),
         # A list of Literal objects to pull from when spawning genes and genomes.
         # literals=[np.float64(x) for x in digits],
-        literals=[],
+        literals=[np.float64(x) for x in np.arange(digits[0], digits[-1], 0.1)],
         # A list of functions (aka Ephemeral Random Constant generators).
         # When one of these functions is called, the output is placed in a Literal and returned as the spawned gene.
         erc_generators=[lambda: random.randint(0, 10)]
-    )
+)
 
     # selector = Lexicase(epsilon=False)
 
