@@ -1,15 +1,11 @@
 import random
-
 import numpy as np
 
+from typing import Sequence, List
 from load_datasets import LoadDatasets
-# from mnist_ca import MNISTCA, RunCA
-from typing import Sequence
 from pyshgp.gp.individual import Individual
 from pyshgp.gp.genome import GeneSpawner
 from pyshgp.push.instruction_set import InstructionSet
-# from pyshgp.gp.estimators import PushEstimator
-# from pyshgp.gp.selection import Lexicase
 from pyshgp.monitoring import VerbosityConfig
 from pyshgp.gp.selection import Selector
 from pyshgp.gp.population import Population
@@ -17,16 +13,40 @@ from pyshgp.tap import Tap, TapManager
 from mnist_estimator import MNISTEstimator
 
 
-def mnist_pysh_ca(pop_size=500, gens=100, steps=10, cut_size=None, digits=None):
+def mnist_pysh_ca(
+        mode: str,
+        filepath: str,
+        pop_size: int = 500,
+        gens: int = 100,
+        steps: int = 10,
+        cut_size: int = None,
+        digits: List = None):
     """
     Function to create and run the pyshGP + CA system
 
-    @param pop_size: The size of the population in the GP algorithm
-    @param gens: The amount of generations that the GP program will run for
-    @param steps: The number of steps of CA update that will happen
-    @param cut_size: The number of each digit of the MNIST dataset to include
-    @param digits: The digits to include
+    Parameters
+    ----------
+    mode: Mode
+        Choose between training and testing operation modes
+    filepath: str
+        Filepath used for saving the estimator during training runs
+    pop_size: int
+        The size of the population in the GP algorithm
+    gens: int
+        The amount of generations that the GP program will run for
+    steps: int
+        The number of steps of CA update that will happen
+    cut_size: int
+        The number of each digit of the MNIST dataset to include
+    digits: List
+        The digits to include
     """
+
+    modes = ['training', 'testing']
+
+    if mode.lower() not in modes:
+        raise ValueError("Invalid mode. Expected either {0} or {1}.".format(modes[0], modes[1]))
+
     spawner = GeneSpawner(
         # Number of input instructions that could appear in the genomes.
         n_inputs=1,
@@ -38,7 +58,7 @@ def mnist_pysh_ca(pop_size=500, gens=100, steps=10, cut_size=None, digits=None):
         # A list of functions (aka Ephemeral Random Constant generators).
         # When one of these functions is called, the output is placed in a Literal and returned as the spawned gene.
         erc_generators=[lambda: random.randint(0, 10)]
-)
+    )
 
     # selector = Lexicase(epsilon=False)
 
@@ -56,7 +76,7 @@ def mnist_pysh_ca(pop_size=500, gens=100, steps=10, cut_size=None, digits=None):
     )
 
     X, y = LoadDatasets.load_mnist_tf()
-    y = np.int64(y)     # for some reason pyshgp won't accept uint8, so cast to int64.
+    y = np.int64(y)  # for some reason pyshgp won't accept uint8, so cast to int64.
     X = X.reshape((-1, 784))
     y = y.reshape((-1, 1))
     X, y = LoadDatasets.exclusive_digits(X, y, digits, cut_size)
@@ -67,6 +87,8 @@ def mnist_pysh_ca(pop_size=500, gens=100, steps=10, cut_size=None, digits=None):
     TapManager.register("pyshgp.push.interpreter.PushInterpreter.run", StateTap())
 
     estimator.fit(X=X, y=y)
+    if mode == 'training':
+        estimator.save(filepath)
 
     best_solution = estimator.solution
 
@@ -123,29 +145,13 @@ class MyCustomTap(Tap):
 
 class StateTap(Tap):
 
-    def pre(self, id, args, kwargs):
+    def pre(self, id: str, args, kwargs):
         interpreter = args[0]
         # print("Program: {0}".format(interpreter.program.pretty_str()))
         # print("Interpreter type library: {0}".format(interpreter.type_library))
         # print("Interpreter state: {0}".format(interpreter.state.pretty_print()))
         pass
 
-# def fitness_function(individual, x, y, n):
-#     average_intensities = {}
-#     # intensity_by_class = {}
-#     bin_label = []
-#     for label in y:
-#         average_intensities[label] = []
-#     for (digit, label) in zip(x, y):
-#         evolution = DrawCA(MNISTCA(digit, label, update_rule=individual.update_rule)).run(last_evolution_step=n)
-#         average_intensities[label].append(evolution)
-#     # for label in average_intensities.keys():
-#     #     intensity_by_class[label] = np.average(np.array(average_intensities[label]).reshape(-1))
-#     for label in average_intensities.keys():
-#         bin_label.append(np.average(np.array(average_intensities[label]).reshape(-1)))
-#     return abs(bin_label[0] - bin_label[1])
-
-# class StateTap(Tap):
 
 if __name__ == '__main__':
-    mnist_pysh_ca(pop_size=300, gens=100, steps=10, cut_size=10, digits=[1, 2])
+    mnist_pysh_ca('training', 'test-1.json', pop_size=20, gens=2, steps=10, cut_size=10, digits=[1, 2])

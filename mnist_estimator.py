@@ -167,12 +167,15 @@ class CustomFunctionEvaluator(Evaluator):
                 self.interpreter,
                 self.steps
             )
+
             # Idea is to try and optimise the average of the grid after the evolutions to the y label.
             # This might be redundant as not sure if optimal_number strategy is useful
+            # print("Error: {0}".format(abs(input_y.to_list()[0] - output)))
+            # print("Input_y: {0}".format(input_y.to_list()[0]))
             if not optimal_number:
-                errors.append(input_y - output)
+                errors.append(abs(input_y.to_list()[0] - output))
             else:
                 errors.append(optimal_number - output)
-            # print(errors)
+        # print(errors)
         return np.array(errors).flatten()
 

@@ -94,7 +94,8 @@ class MNISTCA(CellularAutomaton):
         # print("last_cell_state: {0} and of type: {1}".format(last_cell_state, type(last_cell_state)))
 
         # Use the current cell state as the input for the push program which outputs the next cell state
-        value = self.interpreter.run(self.program, last_cell_state, print_trace=False)  # print_trace for debugging
+        neighborhood = last_cell_state + np.array(neighbors_last_states).flatten()
+        value = self.interpreter.run(self.program, neighborhood, print_trace=False)  # print_trace for debugging
         # print("Value: {0}".format(value))
         if isinstance(value, list):
             value = value[0]
