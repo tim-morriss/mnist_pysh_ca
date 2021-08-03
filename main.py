@@ -154,4 +154,15 @@ class StateTap(Tap):
 
 
 if __name__ == '__main__':
-    mnist_pysh_ca('training', 'test-1.json', pop_size=20, gens=2, steps=10, cut_size=10, digits=[1, 2])
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-p', '--pop_size', help="PushGP population size (default 50).", nargs='?', const=50, type=int)
+    parser.add_argument('-g', '--gens', help="PushGP generations (default 10).", nargs='?', const=50, type=int)
+    parser.add_argument('-s', '--steps', help="Steps for the CA (default 25).", nargs='?', const=25, type=int)
+    parser.add_argument('-c', '--cut_size', help="Number of samples for each label (default 10).", nargs='?', const=10, type=int)
+    parser.add_argument('-d', '--digits', help="Array of digits (default 1,2).", nargs='?', default='1,2', type=str)
+
+    args = parser.parse_args()
+    digits = [int(item) for item in args.digits.split(',')]
+    # print(digits)
+    
+    mnist_pysh_ca('training', 'test-1.json', pop_size=args.pop_size, gens=args.gens, steps=args.steps, cut_size=args.cut_size, digits=digits)
