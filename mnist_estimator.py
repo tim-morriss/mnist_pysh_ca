@@ -102,6 +102,44 @@ class MNISTEstimator(PushEstimator):
         self.solution = self.search.run()
         self.search.config.tear_down()
 
+    @tap
+    def score(self, X, y):
+        """
+        Allows scoring of loaded individual
+
+        Parameters
+        ----------
+        X: pandas dataframe of shape = [n_samples, n_features]
+            The training input samples.
+        y: list, array-like, or pandas dataframe.
+            The target values (class labels in classification, real numbers in
+            regression). Shape = [n_samples] or [n_samples, n_outputs]
+
+        Returns
+        -------
+        np.array
+            Error vector
+
+        """
+        X, y, arity, y_types = check_X_y(X, y)
+        output_types = [self.interpreter.type_library.push_type_for_type(t).name for t in y_types]
+        if self.last_str_from_stdout:
+            ndx = list_rindex(output_types, "str")
+            if ndx is not None:
+                output_types[ndx] = "stdout"
+        # Create signature for the estimator
+        self.signature = ProgramSignature(arity=1, output_stacks=output_types, push_config=self.push_config)
+        # Initialise the evaluator with error function, x and y, interpreter and steps.
+        self.evaluator = CustomFunctionEvaluator(
+            error_function=ErrorFunction(),
+            X=X, y=y,
+            interpreter=self.interpreter,
+            steps=self.steps
+        )
+        print("Individual being tested: \n", self.solution.program.code.pretty_str())
+        errors = self.evaluator.evaluate(self.solution.program)
+        return np.array(errors)
+
 
 class CustomFunctionEvaluator(Evaluator):
 

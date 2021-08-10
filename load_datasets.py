@@ -4,6 +4,7 @@ import random
 from typing import Tuple
 from struct import unpack
 from matplotlib import pyplot as plt
+from sklearn.utils import shuffle as shuff
 
 
 class LoadDatasets:
@@ -123,7 +124,12 @@ class LoadDatasets:
         return np.array(x[y_filter[0]]), np.array(y[y_filter[0]])  # Apply this to the two numpy arrays
 
     @staticmethod
-    def exclusive_digits(x: np.ndarray, y: np.ndarray, numbers_to_return: list, cut_size: int = None) \
+    def exclusive_digits(
+            x: np.ndarray,
+            y: np.ndarray,
+            numbers_to_return: list,
+            cut_size: int = None,
+            shuffle: bool = False) \
             -> Tuple[np.ndarray, np.ndarray]:
         """
         Returns a number of samples belonging to specified labels.
@@ -133,12 +139,18 @@ class LoadDatasets:
         :param numbers_to_return: The numbers to return.
         :param cut_size: How many of each label to return
         :return:
+
+        Parameters
+        ----------
+        shuffle
         """
         temp_x = np.empty([0, x.shape[1]])
         # print("temp shape: %s" % str(temp_x.shape))
         temp_y = np.empty([0, y.shape[1]])
         for num in numbers_to_return:
             x_1, y_1 = LoadDatasets.exclusive_digit(x, y, num)
+            if shuffle:
+                x_1, y_1 = shuff(x_1, y_1)
             if cut_size is not None:
                 temp_x = np.append(temp_x, x_1[:cut_size], axis=0)
                 temp_y = np.append(temp_y, y_1[:cut_size], axis=0)

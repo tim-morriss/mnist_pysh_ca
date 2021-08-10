@@ -8,7 +8,7 @@ from pyshgp.gp.individual import Individual
 from pyshgp.gp.genome import GeneSpawner
 from pyshgp.push.instruction_set import InstructionSet
 from pyshgp.monitoring import VerbosityConfig
-from pyshgp.gp.selection import Selector
+from pyshgp.gp.selection import Selector, Lexicase
 from pyshgp.gp.population import Population
 from pyshgp.tap import Tap, TapManager
 from mnist_estimator import MNISTEstimator
@@ -21,7 +21,8 @@ def mnist_pysh_ca(
         gens: int = 100,
         steps: int = 10,
         cut_size: int = None,
-        digits: List = None):
+        digits: List = None,
+        shuffle: bool = False):
     """
     Function to create and run the pyshGP + CA system
 
@@ -61,7 +62,7 @@ def mnist_pysh_ca(
         erc_generators=[lambda: random.randint(0, 10)]
     )
 
-    # selector = Lexicase(epsilon=False)
+    selector = Lexicase(epsilon=False)
 
     verbosity = VerbosityConfig()
 
@@ -69,32 +70,36 @@ def mnist_pysh_ca(
         spawner=spawner,
         population_size=pop_size,
         max_generations=gens,
-        selector=WackySelector(),
+        selector=selector,
         variation_strategy="umad",
         last_str_from_stdout=True,
         verbose=2,
-        steps=steps
+        steps=steps,
+        simplification_steps=0
     )
 
     X, y = LoadDatasets.load_mnist_tf()
     y = np.int64(y)  # for some reason pyshgp won't accept uint8, so cast to int64.
     X = X.reshape((-1, 784))
     y = y.reshape((-1, 1))
-    X, y = LoadDatasets.exclusive_digits(X, y, digits, cut_size)
+    X, y = LoadDatasets.exclusive_digits(X, y, digits, cut_size, shuffle)
 
     # print("X: %s \n y: %s" % (X[0], y))
 
-    TapManager.register("pyshgp.gp.search.SearchAlgorithm.step", MyCustomTap())
-    TapManager.register("pyshgp.push.interpreter.PushInterpreter.run", StateTap())
+    if mode == 'testing':
+        estimator.load(filepath)
+        score = estimator.score(X=X, y=y)
+        print("Error vector: \n", score)
+        print("Total Error: \n", score.sum())
 
-    estimator.fit(X=X, y=y)
     if mode == 'training':
+        TapManager.register("pyshgp.gp.search.SearchAlgorithm.step", MyCustomTap())
+        TapManager.register("pyshgp.push.interpreter.PushInterpreter.run", StateTap())
+        estimator.fit(X=X, y=y)
         estimator.save(filepath)
-
-    best_solution = estimator.solution
-
-    print("Program:\n", best_solution.program.code.pretty_str())
-    # print("Test errors:\n", estimator.score(X, test_y_2d))
+        best_solution = estimator.solution
+        print("Program:\n", best_solution.program.code.pretty_str())
+        # print("Test errors:\n", estimator.score(X, test_y_2d))
 
 
 class WackySelector(Selector):
@@ -161,9 +166,11 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--steps', help="Steps for the CA (default 25).", nargs='?', const=25, type=int)
     parser.add_argument('-c', '--cut_size', help="Number of samples for each label (default 10).", nargs='?', const=10, type=int)
     parser.add_argument('-d', '--digits', help="Array of digits (default 1,2).", nargs='?', default='1,2', type=str)
+    parser.add_argument('-f', '--filename', help="File to read or write to.", nargs='?', default='test-1.json', type=str)
+    parser.add_argument('-m', '--mode', help="Training or testing mode.", nargs='?', default='training', type=str)
 
     args = parser.parse_args()
     digits = [int(item) for item in args.digits.split(',')]
     # print(digits)
     
-    mnist_pysh_ca('training', 'test-1.json', pop_size=args.pop_size, gens=args.gens, steps=args.steps, cut_size=args.cut_size, digits=digits)
+    mnist_pysh_ca(args.mode, args.filename, pop_size=args.pop_size, gens=args.gens, steps=args.steps, cut_size=args.cut_size, digits=digits)
