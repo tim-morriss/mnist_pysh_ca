@@ -75,7 +75,7 @@ def mnist_pysh_ca(
         last_str_from_stdout=True,
         verbose=2,
         steps=steps,
-        simplification_steps=0
+        simplification_steps=2000
     )
 
     X, y = LoadDatasets.load_mnist_tf()
@@ -168,9 +168,18 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--digits', help="Array of digits (default 1,2).", nargs='?', default='1,2', type=str)
     parser.add_argument('-f', '--filename', help="File to read or write to.", nargs='?', default='test-1.json', type=str)
     parser.add_argument('-m', '--mode', help="Training or testing mode.", nargs='?', default='training', type=str)
+    parser.add_argument('-r', '--random', help="Use a random sample of dataset.", nargs='?', default='False', type=str)
 
     args = parser.parse_args()
     digits = [int(item) for item in args.digits.split(',')]
-    # print(digits)
+    shuffle = args.random.lower() == 'true'
     
-    mnist_pysh_ca(args.mode, args.filename, pop_size=args.pop_size, gens=args.gens, steps=args.steps, cut_size=args.cut_size, digits=digits)
+    mnist_pysh_ca(
+        args.mode, args.filename,
+        pop_size=args.pop_size,
+        gens=args.gens,
+        steps=args.steps,
+        cut_size=args.cut_size,
+        digits=digits,
+        shuffle=shuffle
+    )
