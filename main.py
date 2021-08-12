@@ -16,13 +16,15 @@ from mnist_estimator import MNISTEstimator
 
 def mnist_pysh_ca(
         mode: str,
-        filepath: str,
+        load_filepath: str,
+        save_filepath: str,
         pop_size: int = 500,
         gens: int = 100,
         steps: int = 10,
         cut_size: int = None,
         digits: List = None,
-        shuffle: bool = False):
+        shuffle: bool = False,
+        simplifcation: int = 2000):
     """
     Function to create and run the pyshGP + CA system
 
@@ -30,7 +32,9 @@ def mnist_pysh_ca(
     ----------
     mode: Mode
         Choose between training and testing operation modes
-    filepath: str
+    load_filepath: str
+        Filepath used for loading existing models for testing and simplification.
+    save_filepath: str
         Filepath used for saving the estimator during training runs
     pop_size: int
         The size of the population in the GP algorithm
@@ -42,12 +46,16 @@ def mnist_pysh_ca(
         The number of each digit of the MNIST dataset to include
     digits: List
         The digits to include
+    shuffle: bool
+        Whether or not to shuffle the selection from the MNIST data set
+    simplifcation: int
+        Number of simplification steps to do.
     """
 
-    modes = ['training', 'testing']
+    modes = ['training', 'testing', 'simplify']
 
     if mode.lower() not in modes:
-        raise ValueError("Invalid mode. Expected either {0} or {1}.".format(modes[0], modes[1]))
+        raise ValueError("Invalid mode. Expected either {0}, {1}, or {2}.".format(modes[0], modes[1], modes[2]))
 
     spawner = GeneSpawner(
         # Number of input instructions that could appear in the genomes.
@@ -75,7 +83,7 @@ def mnist_pysh_ca(
         last_str_from_stdout=True,
         verbose=2,
         steps=steps,
-        simplification_steps=2000
+        simplification_steps=0
     )
 
     X, y = LoadDatasets.load_mnist_tf()
@@ -87,19 +95,32 @@ def mnist_pysh_ca(
     # print("X: %s \n y: %s" % (X[0], y))
 
     if mode == 'testing':
-        estimator.load(filepath)
+        estimator.load(load_filepath)
         score = estimator.score(X=X, y=y)
-        print("Error vector: \n", score)
+        print("\n Error vector: \n", score)
         print("Total Error: \n", score.sum())
+        output = estimator.evaluator.output
+        print("CA output: \n", output)
 
     if mode == 'training':
         TapManager.register("pyshgp.gp.search.SearchAlgorithm.step", MyCustomTap())
         TapManager.register("pyshgp.push.interpreter.PushInterpreter.run", StateTap())
         estimator.fit(X=X, y=y)
-        estimator.save(filepath)
+        estimator.save(save_filepath)
         best_solution = estimator.solution
         print("Program:\n", best_solution.program.code.pretty_str())
+        if simplifcation > 0:
+            estimator.simplify(X=X, y=y, simplification_steps=200)
+            estimator.save(save_filepath)
+            print("Program simplified:\n", best_solution.program.code.pretty_str())
         # print("Test errors:\n", estimator.score(X, test_y_2d))
+
+    if mode == 'simplify':
+        estimator.load(load_filepath)
+        estimator.simplify(X=X, y=y, simplification_steps=simplifcation)
+        estimator.save(save_filepath)
+        best_solution = estimator.solution
+        print("Program simplified:\n", best_solution.program.code.pretty_str())
 
 
 class WackySelector(Selector):
@@ -166,20 +187,25 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--steps', help="Steps for the CA (default 25).", nargs='?', const=25, type=int)
     parser.add_argument('-c', '--cut_size', help="Number of samples for each label (default 10).", nargs='?', const=10, type=int)
     parser.add_argument('-d', '--digits', help="Array of digits (default 1,2).", nargs='?', default='1,2', type=str)
-    parser.add_argument('-f', '--filename', help="File to read or write to.", nargs='?', default='test-1.json', type=str)
+    parser.add_argument('-lf', '--load_file', help="File to write to.", nargs='?', default='test-1.json', type=str)
+    parser.add_argument('-sf', '--save_file', help="File to save to.", nargs='?', default='test-1.json', type=str)
     parser.add_argument('-m', '--mode', help="Training or testing mode.", nargs='?', default='training', type=str)
     parser.add_argument('-r', '--random', help="Use a random sample of dataset.", nargs='?', default='False', type=str)
+    parser.add_argument('-simp', '--simplification', help="Number of simplification steps", nargs='?', default=0, type=int)
 
     args = parser.parse_args()
     digits = [int(item) for item in args.digits.split(',')]
     shuffle = args.random.lower() == 'true'
     
     mnist_pysh_ca(
-        args.mode, args.filename,
+        mode=args.mode,
+        load_filepath=args.load_file,
+        save_filepath=args.save_file,
         pop_size=args.pop_size,
         gens=args.gens,
         steps=args.steps,
         cut_size=args.cut_size,
         digits=digits,
-        shuffle=shuffle
+        shuffle=shuffle,
+        simplifcation=args.simplification
     )

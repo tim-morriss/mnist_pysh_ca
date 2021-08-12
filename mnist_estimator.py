@@ -2,7 +2,8 @@ import numpy as np
 import pandas as pd
 
 from pyshgp.gp.estimators import PushEstimator
-from pyshgp.gp.genome import GeneSpawner
+from pyshgp.gp.genome import GeneSpawner, GenomeSimplifier
+from pyshgp.gp.individual import Individual
 from pyshgp.tap import tap
 from pyshgp.utils import list_rindex
 from pyshgp.push.program import ProgramSignature, Program
@@ -136,9 +137,43 @@ class MNISTEstimator(PushEstimator):
             interpreter=self.interpreter,
             steps=self.steps
         )
-        print("Individual being tested: \n", self.solution.program.code.pretty_str())
+        print("\n Individual being tested: \n", self.solution.program.code.pretty_str())
         errors = self.evaluator.evaluate(self.solution.program)
         return np.array(errors)
+
+    def simplify(self, X, y, simplification_steps: int = 2000):
+
+        X, y, arity, y_types = check_X_y(X, y)
+        output_types = [self.interpreter.type_library.push_type_for_type(t).name for t in y_types]
+        if self.last_str_from_stdout:
+            ndx = list_rindex(output_types, "str")
+            if ndx is not None:
+                output_types[ndx] = "stdout"
+        # Create signature for the estimator
+
+        if self.signature is None:
+            self.signature = ProgramSignature(arity=1, output_stacks=output_types, push_config=self.push_config)
+
+        if self.evaluator is None:
+            self.evaluator = CustomFunctionEvaluator(
+                error_function=ErrorFunction(),
+                X=X, y=y,
+                interpreter=self.interpreter,
+                steps=self.steps
+            )
+
+        simplifier = GenomeSimplifier(
+            self.evaluator,
+            self.signature
+        )
+        simp_genome, simp_error_vector = simplifier.simplify(
+            self.solution.genome,
+            self.solution.error_vector,
+            simplification_steps
+        )
+        simplified_best = Individual(simp_genome, self.signature)
+        simplified_best.error_vector = simp_error_vector
+        self.solution = simplified_best
 
 
 class CustomFunctionEvaluator(Evaluator):
@@ -174,6 +209,7 @@ class CustomFunctionEvaluator(Evaluator):
         self.y = pd.DataFrame(y)
         self.error_function = error_function
         self.steps = steps
+        self.output = []
 
     @tap
     def evaluate(self, program: Program, optimal_number: float = None) -> np.ndarray:
@@ -205,11 +241,10 @@ class CustomFunctionEvaluator(Evaluator):
                 self.interpreter,
                 self.steps
             )
+            self.output.append(output)
 
             # Idea is to try and optimise the average of the grid after the evolutions to the y label.
             # This might be redundant as not sure if optimal_number strategy is useful
-            # print("Error: {0}".format(abs(input_y.to_list()[0] - output)))
-            # print("Input_y: {0}".format(input_y.to_list()[0]))
             if not optimal_number:
                 errors.append(abs(input_y.to_list()[0] - output))
             else:
