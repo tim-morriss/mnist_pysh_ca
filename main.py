@@ -1,8 +1,9 @@
 import random
 import numpy as np
 import argparse
+import re
 
-from typing import Sequence, List
+from typing import Sequence, List, Set
 from load_datasets import LoadDatasets
 from pyshgp.gp.individual import Individual
 from pyshgp.gp.genome import GeneSpawner
@@ -24,7 +25,8 @@ def mnist_pysh_ca(
         cut_size: int = None,
         digits: List = None,
         shuffle: bool = False,
-        simplifcation: int = 2000):
+        simplifcation: int = 2000,
+        stacks: Set[str] = {"float"}):
     """
     Function to create and run the pyshGP + CA system
 
@@ -50,6 +52,8 @@ def mnist_pysh_ca(
         Whether or not to shuffle the selection from the MNIST data set
     simplifcation: int
         Number of simplification steps to do.
+    stacks: str
+        Which stacks to use when running the program
     """
 
     modes = ['training', 'testing', 'simplify']
@@ -57,11 +61,16 @@ def mnist_pysh_ca(
     if mode.lower() not in modes:
         raise ValueError("Invalid mode. Expected either {0}, {1}, or {2}.".format(modes[0], modes[1], modes[2]))
 
+    if next(iter(stacks)) == "core":
+        stack_parse = "core"
+    else:
+        stack_parse = InstructionSet().register_core_by_stack(stacks)
+
     spawner = GeneSpawner(
         # Number of input instructions that could appear in the genomes.
         n_inputs=1,
         # instruction_set="core",
-        instruction_set=InstructionSet().register_core_by_stack({"float"}),
+        instruction_set=stack_parse,
         # A list of Literal objects to pull from when spawning genes and genomes.
         # literals=[np.float64(x) for x in digits],
         literals=[np.float64(x) for x in np.arange(digits[0], digits[-1], 0.1)],
@@ -101,6 +110,10 @@ def mnist_pysh_ca(
         print("Total Error: \n", score.sum())
         output = estimator.evaluator.output
         print("CA output: \n", output)
+        with open(save_filepath) as f:
+            f.write("\n Error vector: \n".format(score))
+            f.write("Total Error: \n".format(score.sum()))
+            f.write("CA output: \n".format(output))
 
     if mode == 'training':
         TapManager.register("pyshgp.gp.search.SearchAlgorithm.step", MyCustomTap())
@@ -191,11 +204,13 @@ if __name__ == '__main__':
     parser.add_argument('-sf', '--save_file', help="File to save to.", nargs='?', default='test-1.json', type=str)
     parser.add_argument('-m', '--mode', help="Training or testing mode.", nargs='?', default='training', type=str)
     parser.add_argument('-r', '--random', help="Use a random sample of dataset.", nargs='?', default='False', type=str)
-    parser.add_argument('-simp', '--simplification', help="Number of simplification steps", nargs='?', default=0, type=int)
+    parser.add_argument('-simplify', '--simplification', help="Number of simplification steps", nargs='?', default=0, type=int)
+    parser.add_argument('-stacks', '--stacks', help="Which stacks to include.", nargs='?', default="float", type=str)
 
     args = parser.parse_args()
     digits = [int(item) for item in args.digits.split(',')]
     shuffle = args.random.lower() == 'true'
+    stacks = set([item.strip() for item in re.split(', |,|; | |;', args.stacks)])
     
     mnist_pysh_ca(
         mode=args.mode,
@@ -207,5 +222,6 @@ if __name__ == '__main__':
         cut_size=args.cut_size,
         digits=digits,
         shuffle=shuffle,
-        simplifcation=args.simplification
+        simplifcation=args.simplification,
+        stacks=stacks
     )
