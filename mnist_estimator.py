@@ -20,8 +20,11 @@ class ErrorFunction:
     Custom ErrorFunction for use with CustomFunctionEvaluator.
     """
 
-    @staticmethod
+    def __init__(self):
+        self.last_ca_grid = None
+
     def mnist_error_function(
+            self,
             program: Program,
             X, y,
             interpreter: PushInterpreter,
@@ -42,13 +45,12 @@ class ErrorFunction:
         steps int, optional
             The number of steps of the CA to execute per evolution
         """
-        # print(program.pretty_str())
         X = np.expand_dims(X, axis=0)
         output = RunCA(MNISTCA(X, y, program, interpreter)).run(last_evolution_step=steps)
-        # print("Output from CA: {0}".format(output.shape))
+        # print("Grid output: \n", output.shape)
+        self.last_ca_grid = output
         # Average just the last grid state.
         average = np.average(output[-1].reshape(-1))
-        # print("Average: {0}".format(average))
         return average
 
 

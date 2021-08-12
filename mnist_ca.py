@@ -43,7 +43,6 @@ class MNISTCA(CellularAutomaton):
 
         self.x = x
         self.x = self.x.reshape([-1, 28, 28])   # Reshape to grid shape
-        # print("self x: {0}".format(self.x.shape))
         self.y = y
         self.program = program
         self.interpreter = interpreter
@@ -88,22 +87,16 @@ class MNISTCA(CellularAutomaton):
             The new state of the cell.
         """
 
-        # print(self.x.shape)
-        # temp_x = self.x.reshape(784).tolist()
-        # temp_x = last_cell_state
-        # print("last_cell_state: {0} and of type: {1}".format(last_cell_state, type(last_cell_state)))
-
         # Use the current cell state as the input for the push program which outputs the next cell state
         neighborhood = last_cell_state + np.array(neighbors_last_states).flatten()
         value = self.interpreter.run(self.program, neighborhood, print_trace=False)  # print_trace for debugging
-        # print("Value: {0}".format(value))
         if isinstance(value, list):
             value = value[0]
-        # Catches Token values from the PushInterpreter (used when ouput stack is empty), replaces with 0.
+        # Catches Token values from the PushInterpreter (used when output stack is empty), replaces with 0.
         if isinstance(value, Enum):
             value = 0
-            # print("code gets here and value is: {0}".format(value))
         return [value]
+        # return [last_cell_state[0] + 1]
 
 
 class RunCA(CAWindow):
@@ -166,8 +159,4 @@ class RunCA(CAWindow):
 
         # For each cell and co-ordinate in the CA update the corresponding point in self.states.
         for coordinate, cell in self._cellular_automaton.cells.items():
-            # print("Coordinate: %s, state: %s" % (coordinate, cell.state))
-            # if self.states[evolution_step - 1] is None:
-                # self.states[evolution_step - 1] = np.zeros((28, 28), dtype=np.float32)
-            # print("cell state: {0}".format(cell.state[0]))
             self.states[evolution_step - 1][coordinate[0]][coordinate[1]] = cell.state[0]

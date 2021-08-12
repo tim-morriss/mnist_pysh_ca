@@ -13,6 +13,7 @@ from pyshgp.gp.selection import Selector, Lexicase
 from pyshgp.gp.population import Population
 from pyshgp.tap import Tap, TapManager
 from mnist_estimator import MNISTEstimator
+from ca_animate import CAAnimate
 
 
 def mnist_pysh_ca(
@@ -26,7 +27,8 @@ def mnist_pysh_ca(
         digits: List = None,
         shuffle: bool = False,
         simplifcation: int = 2000,
-        stacks: Set[str] = {"float"}):
+        stacks: Set[str] = None,
+        picture: bool = False):
     """
     Function to create and run the pyshGP + CA system
 
@@ -64,7 +66,10 @@ def mnist_pysh_ca(
     if next(iter(stacks)) == "core":
         stack_parse = "core"
     else:
-        stack_parse = InstructionSet().register_core_by_stack(stacks)
+        if stacks is None:
+            stack_parse = InstructionSet().register_core_by_stack({"float"})
+        else:
+            stack_parse = InstructionSet().register_core_by_stack(stacks)
 
     spawner = GeneSpawner(
         # Number of input instructions that could appear in the genomes.
@@ -72,7 +77,6 @@ def mnist_pysh_ca(
         # instruction_set="core",
         instruction_set=stack_parse,
         # A list of Literal objects to pull from when spawning genes and genomes.
-        # literals=[np.float64(x) for x in digits],
         literals=[np.float64(x) for x in np.arange(digits[0], digits[-1], 0.1)],
         # A list of functions (aka Ephemeral Random Constant generators).
         # When one of these functions is called, the output is placed in a Literal and returned as the spawned gene.
@@ -101,8 +105,6 @@ def mnist_pysh_ca(
     y = y.reshape((-1, 1))
     X, y = LoadDatasets.exclusive_digits(X, y, digits, cut_size, shuffle)
 
-    # print("X: %s \n y: %s" % (X[0], y))
-
     if mode == 'testing':
         estimator.load(load_filepath)
         score = estimator.score(X=X, y=y)
@@ -110,14 +112,16 @@ def mnist_pysh_ca(
         print("Total Error: \n", score.sum())
         output = estimator.evaluator.output
         print("CA output: \n", output)
-        with open(save_filepath) as f:
-            f.write("\n Error vector: \n".format(score))
-            f.write("Total Error: \n".format(score.sum()))
-            f.write("CA output: \n".format(output))
+        if picture:
+            # print("Grid output: \n", estimator.evaluator.error_function.last_ca_grid.shape)
+            CAAnimate.animate_ca(estimator.evaluator.error_function.last_ca_grid, 'picture.gif')
+        with open(save_filepath, 'w') as f:
+            f.write("Error vector: \n {0}".format(score))
+            f.write("Total Error: \n {0}".format(score.sum()))
+            f.write("CA output: \n {0}".format(output))
 
     if mode == 'training':
         TapManager.register("pyshgp.gp.search.SearchAlgorithm.step", MyCustomTap())
-        TapManager.register("pyshgp.push.interpreter.PushInterpreter.run", StateTap())
         estimator.fit(X=X, y=y)
         estimator.save(save_filepath)
         best_solution = estimator.solution
@@ -126,7 +130,6 @@ def mnist_pysh_ca(
             estimator.simplify(X=X, y=y, simplification_steps=200)
             estimator.save(save_filepath)
             print("Program simplified:\n", best_solution.program.code.pretty_str())
-        # print("Test errors:\n", estimator.score(X, test_y_2d))
 
     if mode == 'simplify':
         estimator.load(load_filepath)
@@ -134,40 +137,6 @@ def mnist_pysh_ca(
         estimator.save(save_filepath)
         best_solution = estimator.solution
         print("Program simplified:\n", best_solution.program.code.pretty_str())
-
-
-class WackySelector(Selector):
-    """
-    A parent selection algorithm that gets progressively more elitist with each selection.
-
-    The first time the `WackySelector` is used, it will select a random individual.
-    Every subsequent selection will select a parent with a total error that is <= the previous.
-    If there are no individuals in the population with a <= total error, a random individual will be selected.
-    """
-
-    def __init__(self):
-        self.threshold = None
-
-    def select_random(self, pool: Sequence[Individual]) -> Individual:
-        selected = random.choice(pool)
-        self.threshold = selected.total_error
-        return selected
-
-    def select_one(self, population: Population) -> Individual:
-        """Return single individual from population."""
-        if self.threshold is None:
-            return self.select_random(population)
-        else:
-            filtered = [ind for ind in population if ind.total_error <= self.threshold]
-            if len(filtered) == 0:
-                return self.select_random(population)
-            else:
-                return self.select_random(filtered)
-
-    def select(self, population: Population, n: int = 1) -> Sequence[Individual]:
-        """Return `n` individuals from the population."""
-        super().select(population, n)
-        return [self.select_one(population) for _ in range(n)]
 
 
 class MyCustomTap(Tap):
@@ -183,22 +152,12 @@ class MyCustomTap(Tap):
         print("Best Total Error:", best_individual.total_error)
 
 
-class StateTap(Tap):
-
-    def pre(self, id: str, args, kwargs):
-        interpreter = args[0]
-        # print("Program: {0}".format(interpreter.program.pretty_str()))
-        # print("Interpreter type library: {0}".format(interpreter.type_library))
-        # print("Interpreter state: {0}".format(interpreter.state.pretty_print()))
-        pass
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-p', '--pop_size', help="PushGP population size (default 50).", nargs='?', const=50, type=int)
-    parser.add_argument('-g', '--gens', help="PushGP generations (default 10).", nargs='?', const=50, type=int)
-    parser.add_argument('-s', '--steps', help="Steps for the CA (default 25).", nargs='?', const=25, type=int)
-    parser.add_argument('-c', '--cut_size', help="Number of samples for each label (default 10).", nargs='?', const=10, type=int)
+    parser.add_argument('-p', '--pop_size', help="PushGP population size (default 50).", nargs='?', default=1, type=int)
+    parser.add_argument('-g', '--gens', help="PushGP generations (default 10).", nargs='?', default=1, type=int)
+    parser.add_argument('-s', '--steps', help="Steps for the CA (default 25).", nargs='?', default=25, type=int)
+    parser.add_argument('-c', '--cut_size', help="Number of samples for each label (default 10).", nargs='?', default=10, type=int)
     parser.add_argument('-d', '--digits', help="Array of digits (default 1,2).", nargs='?', default='1,2', type=str)
     parser.add_argument('-lf', '--load_file', help="File to write to.", nargs='?', default='test-1.json', type=str)
     parser.add_argument('-sf', '--save_file', help="File to save to.", nargs='?', default='test-1.json', type=str)
@@ -206,10 +165,12 @@ if __name__ == '__main__':
     parser.add_argument('-r', '--random', help="Use a random sample of dataset.", nargs='?', default='False', type=str)
     parser.add_argument('-simplify', '--simplification', help="Number of simplification steps", nargs='?', default=0, type=int)
     parser.add_argument('-stacks', '--stacks', help="Which stacks to include.", nargs='?', default="float", type=str)
+    parser.add_argument('-pic', '--picture', help="Whether or not to output a picture after testing.", nargs='?', default="false", type=str)
 
     args = parser.parse_args()
     digits = [int(item) for item in args.digits.split(',')]
     shuffle = args.random.lower() == 'true'
+    picture = args.picture.lower() == 'true'
     stacks = set([item.strip() for item in re.split(', |,|; | |;', args.stacks)])
     
     mnist_pysh_ca(
@@ -223,5 +184,6 @@ if __name__ == '__main__':
         digits=digits,
         shuffle=shuffle,
         simplifcation=args.simplification,
-        stacks=stacks
+        stacks=stacks,
+        picture=picture
     )
