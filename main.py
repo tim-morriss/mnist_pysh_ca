@@ -127,8 +127,8 @@ def mnist_pysh_ca(
             )
         with open(filepath("test", "txt"), 'w') as f:
             f.write("Error vector: \n {0}".format(score))
-            f.write("Total Error: \n {0}".format(score.sum()))
-            f.write("CA output: \n {0}".format(output))
+            f.write("\nTotal Error: \n {0}".format(score.sum()))
+            f.write("\nCA output: \n {0}".format(output))
 
     if mode == 'training':
         TapManager.register("pyshgp.gp.search.SearchAlgorithm.step", MyCustomTap())
