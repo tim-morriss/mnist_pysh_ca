@@ -112,13 +112,20 @@ def mnist_pysh_ca(
         print("Total Error: \n", score.sum())
         output = estimator.evaluator.output
         print("CA output: \n", output)
+
+        def filepath(ending, extension):
+            return 'output/{0}--digit{1}-{2}steps{3}.{4}'.format(
+                load_filepath.split('.')[0],
+                digits[1], steps, ending, extension
+            )
+
         if picture:
             # print("Grid output: \n", estimator.evaluator.error_function.last_ca_grid.shape)
             CAAnimate.animate_ca(
                 estimator.evaluator.error_function.last_ca_grid,
-                'output/{0}--digit{1}-{2}steps.gif'.format(load_filepath.split('.')[0], digits[1], steps)
+                filepath("", "gif")
             )
-        with open(save_filepath, 'w') as f:
+        with open(filepath("test", "txt"), 'w') as f:
             f.write("Error vector: \n {0}".format(score))
             f.write("Total Error: \n {0}".format(score.sum()))
             f.write("CA output: \n {0}".format(output))
@@ -160,22 +167,25 @@ if __name__ == '__main__':
     parser.add_argument('-p', '--pop_size', help="PushGP population size (default 50).", nargs='?', default=1, type=int)
     parser.add_argument('-g', '--gens', help="PushGP generations (default 10).", nargs='?', default=1, type=int)
     parser.add_argument('-s', '--steps', help="Steps for the CA (default 25).", nargs='?', default=25, type=int)
-    parser.add_argument('-c', '--cut_size', help="Number of samples for each label (default 10).", nargs='?', default=10, type=int)
+    parser.add_argument('-c', '--cut_size', help="Number of samples for each label (default 10).", nargs='?',
+                        default=10, type=int)
     parser.add_argument('-d', '--digits', help="Array of digits (default 1,2).", nargs='?', default='1,2', type=str)
     parser.add_argument('-lf', '--load_file', help="File to write to.", nargs='?', default='test-1.json', type=str)
     parser.add_argument('-sf', '--save_file', help="File to save to.", nargs='?', default='test-1.json', type=str)
     parser.add_argument('-m', '--mode', help="Training or testing mode.", nargs='?', default='training', type=str)
     parser.add_argument('-r', '--random', help="Use a random sample of dataset.", nargs='?', default='False', type=str)
-    parser.add_argument('-simplify', '--simplification', help="Number of simplification steps", nargs='?', default=0, type=int)
+    parser.add_argument('-simplify', '--simplification', help="Number of simplification steps", nargs='?', default=0,
+                        type=int)
     parser.add_argument('-stacks', '--stacks', help="Which stacks to include.", nargs='?', default="float", type=str)
-    parser.add_argument('-pic', '--picture', help="Whether or not to output a picture after testing.", nargs='?', default="false", type=str)
+    parser.add_argument('-pic', '--picture', help="Whether or not to output a picture after testing.", nargs='?',
+                        default="false", type=str)
 
     args = parser.parse_args()
     digits = [int(item) for item in args.digits.split(',')]
     shuffle = args.random.lower() == 'true'
     picture = args.picture.lower() == 'true'
     stacks = set([item.strip() for item in re.split(', |,|; | |;', args.stacks)])
-    
+
     mnist_pysh_ca(
         mode=args.mode,
         load_filepath=args.load_file,
