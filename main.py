@@ -114,7 +114,10 @@ def mnist_pysh_ca(
         print("CA output: \n", output)
         if picture:
             # print("Grid output: \n", estimator.evaluator.error_function.last_ca_grid.shape)
-            CAAnimate.animate_ca(estimator.evaluator.error_function.last_ca_grid, 'picture.gif')
+            CAAnimate.animate_ca(
+                estimator.evaluator.error_function.last_ca_grid,
+                'output/{0}--digit{1}-{2}steps.gif'.format(load_filepath.split('.')[0], digits[1], steps)
+            )
         with open(save_filepath, 'w') as f:
             f.write("Error vector: \n {0}".format(score))
             f.write("Total Error: \n {0}".format(score.sum()))

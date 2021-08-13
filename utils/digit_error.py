@@ -34,7 +34,7 @@ if __name__ == '__main__':
     print("Average error for {0}: \n {1}".format(digits[0], avg_digit_1))
     print("Average error for {0}: \n {1}".format(digits[1], avg_digit_2))
 
-    predicted_1 = [(digits[0] - num) for num in errors[:args.number]]
-    predicted_2 = [(digits[1] - num) for num in errors[args.number:]]
-    print("Predicted values for {0}: \n {1}".format(digits[0], predicted_1))
-    print("Predicted values for {0}: \n {1}".format(digits[1], predicted_2))
+    # predicted_1 = [(digits[0] - num) for num in errors[:args.number]]
+    # predicted_2 = [(digits[1] - num) for num in errors[args.number:]]
+    # print("Predicted values for {0}: \n {1}".format(digits[0], predicted_1))
+    # print("Predicted values for {0}: \n {1}".format(digits[1], predicted_2))
