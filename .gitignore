@@ -1,14 +1,5 @@
-/Push GP Examples and Demo/venv/
-/Push GP Examples and Demo/venv-linux/
-/Push GP Examples and Demo/.idea/
-
 .idea/
 /venv/
-/test_code/
-/Push GP Examples and Demo/
 /.pytest_cache/
-/averages/
-/ca_examples/
-/ca_model/
 
 __pycache__/
