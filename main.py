@@ -114,9 +114,9 @@ def mnist_pysh_ca(
         print("CA output: \n", output)
 
         def filepath(ending, extension):
-            return 'output/{0}--digit{1}-{2}steps{3}.{4}'.format(
+            return 'output/{0}--digit{1}-{2}steps-cut_size{3}{4}.{5}'.format(
                 load_filepath.split('.')[0],
-                digits[1], steps, ending, extension
+                digits[1], steps, cut_size, ending, extension
             )
 
         if picture:
@@ -170,8 +170,8 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--cut_size', help="Number of samples for each label (default 10).", nargs='?',
                         default=10, type=int)
     parser.add_argument('-d', '--digits', help="Array of digits (default 1,2).", nargs='?', default='1,2', type=str)
-    parser.add_argument('-lf', '--load_file', help="File to write to.", nargs='?', default='test-1.json', type=str)
-    parser.add_argument('-sf', '--save_file', help="File to save to.", nargs='?', default='test-1.json', type=str)
+    parser.add_argument('-lf', '--load_file', help="File to write to.", nargs='?', default='test-1.txt', type=str)
+    parser.add_argument('-sf', '--save_file', help="File to save to.", nargs='?', default='test-1.txt', type=str)
     parser.add_argument('-m', '--mode', help="Training or testing mode.", nargs='?', default='training', type=str)
     parser.add_argument('-r', '--random', help="Use a random sample of dataset.", nargs='?', default='False', type=str)
     parser.add_argument('-simplify', '--simplification', help="Number of simplification steps", nargs='?', default=0,
