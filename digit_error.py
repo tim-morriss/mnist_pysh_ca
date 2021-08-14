@@ -2,12 +2,17 @@ import argparse
 import statistics
 import csv
 
-if __name__ == '__main__':
+
+def digit_error():
+    """
+    Command line method to allow statistics about an error vector.
+    """
     parse = argparse.ArgumentParser()
 
     parse.add_argument('list', help="list of errors", nargs='?', default="", type=str)
     parse.add_argument('digits', help="which digits in what order", nargs='?', default="1,2", type=str)
-    parse.add_argument('-n', '--number', help="Number of samples for each label (default 10).", nargs='?', default=10, type=int)
+    parse.add_argument('-n', '--number', help="Number of samples for each label (default 10).", nargs='?', default=10,
+                       type=int)
     parse.add_argument('-f', '--filename', help="file to load error vector from", nargs='?', default=None, type=str)
 
     args = parse.parse_args()
@@ -38,3 +43,7 @@ if __name__ == '__main__':
     # predicted_2 = [(digits[1] - num) for num in errors[args.number:]]
     # print("Predicted values for {0}: \n {1}".format(digits[0], predicted_1))
     # print("Predicted values for {0}: \n {1}".format(digits[1], predicted_2))
+
+
+if __name__ == '__main__':
+    digit_error()

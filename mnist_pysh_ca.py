@@ -6,7 +6,7 @@ from time import gmtime, strftime
 from typing import List, Set, Sequence
 
 from pysh_ca.pyshgp.class_function import ClassFunction
-from pysh_ca.utils.load_datasets import LoadDatasets
+from load_datasets import LoadDatasets
 from pyshgp.gp.genome import GeneSpawner
 from pyshgp.push.instruction_set import InstructionSet
 from pyshgp.gp.selection import Lexicase

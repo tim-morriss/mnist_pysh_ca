@@ -2,7 +2,7 @@ import os
 import argparse
 import re
 
-from pyshgp_ca.mnist_pysh_ca import MNISTPyshCA
+from mnist_pysh_ca import MNISTPyshCA
 
 
 def main():
