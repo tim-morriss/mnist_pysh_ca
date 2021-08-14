@@ -1,3 +1,5 @@
+from typing import List
+
 import numpy as np
 import pandas as pd
 from pyshgp.gp.evaluation import Evaluator
@@ -7,9 +9,10 @@ from pyshgp.tap import tap
 from pysh_ca.pyshgp.ca_error_function import CAErrorFunction
 
 
-class CustomFunctionEvaluator(Evaluator):
+class CAEvaluator(Evaluator):
 
     def __init__(self,
+                 dimensions: List[int],
                  error_function: CAErrorFunction,
                  X, y,
                  interpreter: PushInterpreter = "default",
@@ -19,6 +22,8 @@ class CustomFunctionEvaluator(Evaluator):
 
         Parameters
         ----------
+        dimensions : List[int]
+            dimensions for the CA
         error_function: ErrorFunction object
         X: pandas dataframe of shape = [n_samples, n_features]
             The training input samples.
@@ -41,6 +46,7 @@ class CustomFunctionEvaluator(Evaluator):
         self.error_function = error_function
         self.steps = steps
         self.output = []
+        self.dimensions = dimensions
 
     @tap
     def evaluate(self, program: Program) -> np.ndarray:
@@ -65,6 +71,7 @@ class CustomFunctionEvaluator(Evaluator):
             input_y = self.y.iloc[ndx]
             # print(input_x)
             output = self.error_function.ca_error_function(
+                self.dimensions,
                 program,
                 input_x, input_y,
                 self.interpreter,

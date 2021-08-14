@@ -2,6 +2,8 @@ import numpy as np
 
 from typing import List
 from numbers import Number
+
+from pysh_ca.ca.ca_init_function import CAInitFunction
 from pysh_ca.ca.pysh_ca import PyshCA
 from pysh_ca.ca.run_ca import RunCA
 from pyshgp.push.program import Program
@@ -14,9 +16,10 @@ class CAErrorFunction:
     Custom ErrorFunction for use with CustomFunctionEvaluator.
     """
 
-    def __init__(self, class_function: ClassFunction):
+    def __init__(self, class_function: ClassFunction, init_function: CAInitFunction):
         self.last_ca_grid = None
         self.class_function = class_function
+        self.init_function = init_function
 
     def ca_error_function(
             self,
@@ -45,7 +48,7 @@ class CAErrorFunction:
             The number of steps of the CA to execute per evolution
         """
         X = np.expand_dims(X, axis=0)
-        output = RunCA(PyshCA(dimensions, X, y, program, interpreter)).run(last_evolution_step=steps)
+        output = RunCA(PyshCA(dimensions, self.init_function, X, y, program, interpreter)).run(last_evolution_step=steps)
         # print("Grid output: \n", output.shape)
         self.last_ca_grid = output
         # Average just the last grid state.

@@ -14,7 +14,7 @@ def main():
                         default=10, type=int)
     parser.add_argument('-d', '--digits', help="Array of digits (default 1,2).", nargs='?', default='1,2', type=str)
     parser.add_argument('-lf', '--load_file', help="File to write to.", nargs='?', default='test-1.txt', type=str)
-    parser.add_argument('-sf', '--save_folder', help="Folder to save to.", nargs='?', default='test-1.txt', type=str)
+    parser.add_argument('-sf', '--save_folder', help="Folder to save to.", nargs='?', default='output', type=str)
     parser.add_argument('-m', '--mode', help="Training or testing mode.", nargs='?', default='training', type=str)
     parser.add_argument('-r', '--random', help="Use a random sample of dataset.", nargs='?', default='False', type=str)
     parser.add_argument('-simplify', '--simplification', help="Number of simplification steps", nargs='?', default=0,

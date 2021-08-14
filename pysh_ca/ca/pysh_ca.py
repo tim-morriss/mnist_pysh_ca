@@ -5,12 +5,14 @@ from cellular_automaton import CellularAutomaton, EdgeRule, MooreNeighborhood
 from pyshgp.push.interpreter import PushInterpreter
 from typing import Sequence, List
 from pyshgp.push.program import Program
+from pysh_ca.ca.ca_init_function import CAInitFunction
 
 
 class PyshCA(CellularAutomaton):
 
     def __init__(self,
                  dimension: List[int],
+                 init_function: CAInitFunction,
                  x: np.ndarray,
                  y: np.ndarray,
                  program: Program,
@@ -44,6 +46,7 @@ class PyshCA(CellularAutomaton):
         self.y = y
         self.program = program
         self.interpreter = interpreter
+        self.init_function = init_function
         super().__init__(
             dimension=dimension,
             neighborhood=MooreNeighborhood(edge_rule)
@@ -63,9 +66,7 @@ class PyshCA(CellularAutomaton):
         sequence
             The initialised cell.
         """
-
-        cell = self.x[0][cell_coordinate[0]][cell_coordinate[1]]
-        init = cell
+        init = self.init_function.ca_init_function(self.x, self.y, cell_coordinate)
         return [init]
 
     def evolve_rule(self, last_cell_state: Sequence, neighbors_last_states: Sequence) -> Sequence:

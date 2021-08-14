@@ -1,3 +1,5 @@
+from typing import List
+
 import numpy as np
 
 from pyshgp.gp.estimators import PushEstimator
@@ -7,17 +9,20 @@ from pyshgp.tap import tap
 from pyshgp.utils import list_rindex
 from pyshgp.push.program import ProgramSignature
 from pyshgp.validation import check_X_y
+from pysh_ca.ca.ca_init_function import CAInitFunction
 from pysh_ca.pyshgp.ca_error_function import CAErrorFunction
 from pysh_ca.pyshgp.class_function import ClassFunction
-from pysh_ca.pyshgp.custom_function_evaluator import CustomFunctionEvaluator
+from pysh_ca.pyshgp.ca_evaluator import CAEvaluator
 
 
 class CAEstimator(PushEstimator):
 
     def __init__(
             self,
+            dimensions: List[int],
             spawner: GeneSpawner,
             class_function: ClassFunction,
+            init_function: CAInitFunction,
             steps: int,
             *args, **kwargs):
         """
@@ -36,6 +41,8 @@ class CAEstimator(PushEstimator):
         super().__init__(spawner, *args, **kwargs)
         self.steps = steps
         self.class_function = class_function
+        self.init_function = init_function
+        self.dimensions = dimensions
 
     def _initialise_signature(self, X, y):
         X, y, arity, y_types = check_X_y(X, y)
@@ -49,8 +56,9 @@ class CAEstimator(PushEstimator):
 
     def _initialise_evaluator(self, X, y):
         # Initialise the evaluator with error function, x and y, interpreter and steps.
-        self.evaluator = CustomFunctionEvaluator(
-            error_function=CAErrorFunction(self.class_function),
+        self.evaluator = CAEvaluator(
+            self.dimensions,
+            error_function=CAErrorFunction(self.class_function, self.init_function),
             X=X, y=y,
             interpreter=self.interpreter,
             steps=self.steps

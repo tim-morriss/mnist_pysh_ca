@@ -20,7 +20,6 @@ class RunCA(CAWindow):
         cellular_automaton: CellularAutomaton
             CellularAutomaton object to be run.
         """
-
         self._cellular_automaton = cellular_automaton
         self.states = np.empty(0)
 

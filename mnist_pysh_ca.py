@@ -5,6 +5,7 @@ from pathlib import Path
 from time import gmtime, strftime
 from typing import List, Set, Sequence
 
+from pysh_ca.ca.ca_init_function import CAInitFunction
 from pysh_ca.pyshgp.class_function import ClassFunction
 from load_datasets import LoadDatasets
 from pyshgp.gp.genome import GeneSpawner
@@ -91,7 +92,9 @@ class MNISTPyshCA:
 
         estimator = CAEstimator(
             spawner=spawner,
+            dimensions=[28, 28],
             class_function=MNISTClassify(),
+            init_function=MNISTInitFunction(),
             population_size=pop_size,
             max_generations=gens,
             selector=selector,
@@ -165,6 +168,12 @@ class MNISTClassify(ClassFunction):
     def classify(self, ca_output: Sequence):
         average = np.average(ca_output[-1].reshape(-1))
         return average
+
+
+class MNISTInitFunction(CAInitFunction):
+
+    def ca_init_function(self, X: np.ndarray, y: np.ndarray, cell_coordinate: Sequence):
+        return X[0][cell_coordinate[0]][cell_coordinate[1]]
 
 
 class PopulationTap(Tap):
