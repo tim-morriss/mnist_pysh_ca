@@ -3,23 +3,26 @@ import numpy as np
 from enum import Enum
 from cellular_automaton import CellularAutomaton, EdgeRule, MooreNeighborhood
 from pyshgp.push.interpreter import PushInterpreter
-from typing import Sequence
+from typing import Sequence, List
 from pyshgp.push.program import Program
 
 
-class MNISTCA(CellularAutomaton):
+class PyshCA(CellularAutomaton):
 
     def __init__(self,
-                 x, y,
+                 dimension: List[int],
+                 x: np.ndarray,
+                 y: np.ndarray,
                  program: Program,
                  interpreter: PushInterpreter,
-                 edge_rule=EdgeRule.FIRST_AND_LAST_CELL_OF_DIMENSION_ARE_NEIGHBORS):
+                 edge_rule: EdgeRule = EdgeRule.FIRST_AND_LAST_CELL_OF_DIMENSION_ARE_NEIGHBORS):
         """
-        Modified CellularAutomaton class that specifies cell states and evolve rules for the MNIST dataset.
-        Takes one MNIST digit and one Pyshgp program at a time.
+        Extended cellular automata to accommodate pysh rules
 
         Parameters
         ----------
+        dimension: list[int]
+            dimension of the CA
         x: np.array
             Data input
         y: np.array
@@ -37,12 +40,12 @@ class MNISTCA(CellularAutomaton):
         """
 
         self.x = x
-        self.x = self.x.reshape([-1, 28, 28])   # Reshape to grid shape
+        self.x = self.x.reshape([-1] + dimension)   # Reshape to grid shape
         self.y = y
         self.program = program
         self.interpreter = interpreter
         super().__init__(
-            dimension=[27, 27],  # 28 x 28 pixels
+            dimension=dimension,
             neighborhood=MooreNeighborhood(edge_rule)
         )
 

@@ -7,26 +7,35 @@ from pyshgp.tap import tap
 from pyshgp.utils import list_rindex
 from pyshgp.push.program import ProgramSignature
 from pyshgp.validation import check_X_y
-from pyshgp_ca.pyshgp.mnist_error_function import MNISTErrorFunction
-from pyshgp_ca.pyshgp.custom_function_evaluator import CustomFunctionEvaluator
+from pysh_ca.pyshgp.ca_error_function import CAErrorFunction
+from pysh_ca.pyshgp.class_function import ClassFunction
+from pysh_ca.pyshgp.custom_function_evaluator import CustomFunctionEvaluator
 
 
-class MNISTEstimator(PushEstimator):
+class CAEstimator(PushEstimator):
 
-    def __init__(self, spawner: GeneSpawner, steps: int, *args, **kwargs):
+    def __init__(
+            self,
+            spawner: GeneSpawner,
+            class_function: ClassFunction,
+            steps: int,
+            *args, **kwargs):
         """
 
         Parameters
         ----------
         spawner: GeneSpawner
             Used to spawn individuals.
+        class_function : ClassFunction
+            Function used to classify CA output.
         steps: int
             Number of steps of evolution of the CA grid.
         args
         kwargs
         """
-        super().__init__(spawner, **kwargs)
+        super().__init__(spawner, *args, **kwargs)
         self.steps = steps
+        self.class_function = class_function
 
     def _initialise_signature(self, X, y):
         X, y, arity, y_types = check_X_y(X, y)
@@ -41,7 +50,7 @@ class MNISTEstimator(PushEstimator):
     def _initialise_evaluator(self, X, y):
         # Initialise the evaluator with error function, x and y, interpreter and steps.
         self.evaluator = CustomFunctionEvaluator(
-            error_function=MNISTErrorFunction(),
+            error_function=CAErrorFunction(self.class_function),
             X=X, y=y,
             interpreter=self.interpreter,
             steps=self.steps

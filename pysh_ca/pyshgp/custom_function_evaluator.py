@@ -4,13 +4,13 @@ from pyshgp.gp.evaluation import Evaluator
 from pyshgp.push.interpreter import PushInterpreter
 from pyshgp.push.program import Program
 from pyshgp.tap import tap
-from pyshgp_ca.pyshgp.mnist_error_function import MNISTErrorFunction
+from pysh_ca.pyshgp.ca_error_function import CAErrorFunction
 
 
 class CustomFunctionEvaluator(Evaluator):
 
     def __init__(self,
-                 error_function: MNISTErrorFunction,
+                 error_function: CAErrorFunction,
                  X, y,
                  interpreter: PushInterpreter = "default",
                  penalty: float = 1e6,
@@ -43,7 +43,7 @@ class CustomFunctionEvaluator(Evaluator):
         self.output = []
 
     @tap
-    def evaluate(self, program: Program, optimal_number: float = None) -> np.ndarray:
+    def evaluate(self, program: Program) -> np.ndarray:
         """
         Works through each sample in the input and runs it with the individual (program).
 
@@ -51,8 +51,6 @@ class CustomFunctionEvaluator(Evaluator):
         ----------
         program: Program
             A push program to be evaluated.
-        optimal_number: float, optional
-            The number to optimise to.
 
         Returns
         -------
@@ -66,19 +64,12 @@ class CustomFunctionEvaluator(Evaluator):
             input_x = self.X.iloc[ndx]
             input_y = self.y.iloc[ndx]
             # print(input_x)
-            output = self.error_function.mnist_error_function(
+            output = self.error_function.ca_error_function(
                 program,
                 input_x, input_y,
                 self.interpreter,
                 self.steps
             )
             self.output.append(output)
-
-            # Idea is to try and optimise the average of the grid after the evolutions to the y label.
-            # This might be redundant as not sure if optimal_number strategy is useful
-            if not optimal_number:
-                errors.append(abs(input_y.to_list()[0] - output))
-            else:
-                errors.append(optimal_number - output)
-        # print(errors)
+            errors.append(abs(input_y.to_list()[0] - output))
         return np.array(errors).flatten()

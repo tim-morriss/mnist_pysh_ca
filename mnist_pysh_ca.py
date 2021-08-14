@@ -3,14 +3,16 @@ import numpy as np
 
 from pathlib import Path
 from time import gmtime, strftime
-from typing import List, Set
-from pyshgp_ca.utils.load_datasets import LoadDatasets
+from typing import List, Set, Sequence
+
+from pysh_ca.pyshgp.class_function import ClassFunction
+from pysh_ca.utils.load_datasets import LoadDatasets
 from pyshgp.gp.genome import GeneSpawner
 from pyshgp.push.instruction_set import InstructionSet
 from pyshgp.gp.selection import Lexicase
 from pyshgp.tap import Tap, TapManager
-from pyshgp_ca.pyshgp.mnist_estimator import MNISTEstimator
-from pyshgp_ca.utils.ca_animate import CAAnimate
+from pysh_ca.pyshgp.ca_estimator import CAEstimator
+from pysh_ca.utils.ca_animate import CAAnimate
 
 
 class MNISTPyshCA:
@@ -87,8 +89,9 @@ class MNISTPyshCA:
 
         selector = Lexicase(epsilon=False)
 
-        estimator = MNISTEstimator(
+        estimator = CAEstimator(
             spawner=spawner,
+            class_function=MNISTClassify(),
             population_size=pop_size,
             max_generations=gens,
             selector=selector,
@@ -155,6 +158,13 @@ class MNISTPyshCA:
             estimator.save(filepath(" -- simplified", "json", ""))
             best_solution = estimator.solution
             print("Program simplified:\n", best_solution.program.code.pretty_str())
+
+
+class MNISTClassify(ClassFunction):
+
+    def classify(self, ca_output: Sequence):
+        average = np.average(ca_output[-1].reshape(-1))
+        return average
 
 
 class PopulationTap(Tap):

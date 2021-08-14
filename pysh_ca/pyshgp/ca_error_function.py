@@ -1,30 +1,38 @@
 import numpy as np
 
-from pyshgp_ca.ca.mnist_ca import MNISTCA
-from pyshgp_ca.ca.run_ca import RunCA
+from typing import List
+from numbers import Number
+from pysh_ca.ca.pysh_ca import PyshCA
+from pysh_ca.ca.run_ca import RunCA
 from pyshgp.push.program import Program
 from pyshgp.push.interpreter import PushInterpreter
+from pysh_ca.pyshgp.class_function import ClassFunction
 
 
-class MNISTErrorFunction:
+class CAErrorFunction:
     """
     Custom ErrorFunction for use with CustomFunctionEvaluator.
     """
 
-    def __init__(self):
+    def __init__(self, class_function: ClassFunction):
         self.last_ca_grid = None
+        self.class_function = class_function
 
-    def mnist_error_function(
+    def ca_error_function(
             self,
+            dimensions: List[int],
             program: Program,
-            X, y,
+            X: np.ndarray,
+            y: np.ndarray,
             interpreter: PushInterpreter,
-            steps: int = 100) -> float:
+            steps: int = 100) -> Number:
         """
         Takes a single X and y value and runs them through a CA.
 
         Parameters
         ----------
+        dimensions: List[int]
+            Dimensions of the CA
         program: Program
             An individual push program
         X: numpy array
@@ -37,9 +45,8 @@ class MNISTErrorFunction:
             The number of steps of the CA to execute per evolution
         """
         X = np.expand_dims(X, axis=0)
-        output = RunCA(MNISTCA(X, y, program, interpreter)).run(last_evolution_step=steps)
+        output = RunCA(PyshCA(dimensions, X, y, program, interpreter)).run(last_evolution_step=steps)
         # print("Grid output: \n", output.shape)
         self.last_ca_grid = output
         # Average just the last grid state.
-        average = np.average(output[-1].reshape(-1))
-        return average
+        return self.class_function.classify(output)
