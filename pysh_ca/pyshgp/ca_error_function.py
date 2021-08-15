@@ -12,11 +12,18 @@ from pysh_ca.pyshgp.class_function import ClassFunction
 
 
 class CAErrorFunction:
-    """
-    Custom ErrorFunction for use with CustomFunctionEvaluator.
-    """
 
     def __init__(self, class_function: ClassFunction, init_function: CAInitFunction):
+        """
+        Custom ErrorFunction for use with CustomFunctionEvaluator.
+
+        Parameters
+        ----------
+        class_function: ClassFunction
+            Function to classify CA output.
+        init_function: CAInitFunction
+            Function to initialise CA grid.
+        """
         self.last_ca_grid = None
         self.class_function = class_function
         self.init_function = init_function

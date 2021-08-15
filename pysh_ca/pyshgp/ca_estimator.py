@@ -87,7 +87,7 @@ class CAEstimator(PushEstimator):
     @tap
     def score(self, X, y):
         """
-        Allows scoring of loaded individual
+        Scores loaded program.
 
         Parameters
         ----------
@@ -115,7 +115,19 @@ class CAEstimator(PushEstimator):
 
     @tap
     def simplify(self, X, y, simplification_steps: int = 2000):
+        """
+        Simplifies a loaded program.
 
+        Parameters
+        ----------
+       X: pandas dataframe of shape = [n_samples, n_features]
+            The training input samples.
+        y: list, array-like, or pandas dataframe.
+            The target values (class labels in classification, real numbers in
+            regression). Shape = [n_samples] or [n_samples, n_outputs]
+        simplification_steps: int
+            Number of simplification steps to conduct
+        """
         if self.signature is None:
             self._initialise_signature(X, y)
 

@@ -1,7 +1,8 @@
-from collections import Sequence
-
 import numpy as np
+
 from cellular_automaton import CAWindow, CellularAutomaton
+from pysh_ca.ca.pysh_ca import PyshCA
+from collections import Sequence
 
 
 class RunCA(CAWindow):
@@ -11,14 +12,14 @@ class RunCA(CAWindow):
     Saves each evolution step in self.states.
     """
 
-    def __init__(self, cellular_automaton: CellularAutomaton):
+    def __init__(self, cellular_automaton: PyshCA):
         """
-        Designed to use run a MNISTCA object, not currently applicable for any other CellularAutomaton objects.
+        Designed to use run a PyshCA object, not currently applicable for any other CellularAutomaton objects.
 
         Parameters
         ----------
-        cellular_automaton: CellularAutomaton
-            CellularAutomaton object to be run.
+        cellular_automaton: PyshCA
+            PyshCA object to be run.
         """
         self._cellular_automaton = cellular_automaton
         self.states = np.empty(0)

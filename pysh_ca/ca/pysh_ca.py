@@ -19,7 +19,8 @@ class PyshCA(CellularAutomaton):
                  interpreter: PushInterpreter,
                  edge_rule: EdgeRule = EdgeRule.FIRST_AND_LAST_CELL_OF_DIMENSION_ARE_NEIGHBORS):
         """
-        Extended cellular automata to accommodate pysh rules
+        Extended cellular automata to accommodate PyshGP rules.
+        Designed to work with labeled numeric data sets.
 
         Parameters
         ----------

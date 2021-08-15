@@ -11,6 +11,7 @@ class CAInitFunction(ABC):
     def ca_init_function(self, X: np.ndarray, y: np.ndarray, cell_coordinate: Sequence) -> Number:
         """
         Custom initialisation function of CA using data set.
+        Input is one sample from data set, with the output being the cell state.
 
         Parameters
         ----------

@@ -1,10 +1,11 @@
+import os
 import random
+import statistics
 import numpy as np
 
 from pathlib import Path
 from time import gmtime, strftime
 from typing import List, Set, Sequence
-
 from pysh_ca.ca.ca_init_function import CAInitFunction
 from pysh_ca.pyshgp.class_function import ClassFunction
 from load_datasets import LoadDatasets
@@ -33,7 +34,7 @@ class MNISTPyshCA:
             stacks: Set[str] = None,
             picture: bool = False):
         """
-        Function to create and run the pyshGP + CA system.
+        Function to create and run the pysh_ca system.
 
         Parameters
         ----------
@@ -116,7 +117,7 @@ class MNISTPyshCA:
             name_string = extra_string
 
             if name_string is None:
-                name_string = load_filepath.split('.')[0] + '/'
+                name_string = os.path.basename(load_filepath).split('.')[0] + '/'
                 Path(save_folder + '/' + name_string).mkdir(parents=True, exist_ok=True)
 
             output_str = '{0}/{1}{2} -- digits {3} -- {4} steps -- cut_size {5}{6}.{7}'.format(
@@ -131,6 +132,16 @@ class MNISTPyshCA:
             score = estimator.score(X=X, y=y)
             print("\n Error vector: \n", score)
             print("Total Error: \n", score.sum())
+            # Find total error for each digit
+            error_digit_1 = sum(score[:cut_size])
+            error_digit_2 = sum(score[cut_size:])
+            print("Total error for {0}: \n {1}".format(digits[0], error_digit_1))
+            print("Total error for {0}: \n {1}".format(digits[1], error_digit_2))
+            # Find average error for each digit
+            avg_digit_1 = statistics.mean(score[:cut_size])
+            avg_digit_2 = statistics.mean(score[cut_size:])
+            print("Average error for {0}: \n {1}".format(digits[0], avg_digit_1))
+            print("Average error for {0}: \n {1}".format(digits[1], avg_digit_2))
             output = estimator.evaluator.output
             print("CA output: \n", output)
 
@@ -142,6 +153,10 @@ class MNISTPyshCA:
             with open(filepath(" -- test", "txt"), 'w') as f:
                 f.write("Error vector: \n {0}".format(score))
                 f.write("\nTotal Error: \n {0}".format(score.sum()))
+                f.write("\nTotal error for {0}: \n {1}".format(digits[0], error_digit_1))
+                f.write("\nTotal error for {0}: \n {1}".format(digits[1], error_digit_2))
+                f.write("\nAverage error for {0}: \n {1}".format(digits[0], avg_digit_1))
+                f.write("\nAverage error for {0}: \n {1}".format(digits[1], avg_digit_2))
                 f.write("\nCA output: \n {0}".format(output))
 
         if mode == 'training':

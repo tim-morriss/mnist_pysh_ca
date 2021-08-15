@@ -19,6 +19,7 @@ class CAEvaluator(Evaluator):
                  penalty: float = 1e6,
                  steps: int = 100):
         """
+        Extended PyshGP Evaluator function, designed to work with CA grid.
 
         Parameters
         ----------

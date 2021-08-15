@@ -1,18 +1,23 @@
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import numpy as np
 
 
 class CAAnimate:
 
     @staticmethod
-    def animate_ca(x, filepath, interval=10):
+    def animate_ca(x: np.ndarray, filepath: str, interval: int = 10):
         """
         Generates a animated gif of the input x.
 
-        :param x: a list of x steps over time
-            :type: list of np.array
-        :param filepath: filepath of the output file as str
-        :param interval: the interval between the frames in ms
+        Parameters
+        ----------
+        x: np.ndarray
+            A list of x steps over time
+        filepath: str
+            Filepath of the output file as string
+        interval: int
+            The interval between frame in ms
         """
         fig = plt.figure(figsize=x[0].shape)
 
@@ -24,7 +29,7 @@ class CAAnimate:
             ax.clear()  # clear the plot
             ax.set_axis_off()  # disable axis
             # print("x[%s]: %s" % (i, x[i]))
-            img = ax.imshow(x[i], interpolation='none', cmap='RdPu')
+            img = ax.imshow(x[i], interpolation='none', cmap='binary')
             return [img]
 
         # call the animator
