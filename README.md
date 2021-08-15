@@ -4,8 +4,6 @@
 
 Python based project combining the PyshGP and cellular-automaton packages with the aim of optimising update rules to allow for accurate classification.
 
-**WIP**
-
 Currently features a CLI interface called using:
 
 ```bash
