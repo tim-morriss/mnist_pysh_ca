@@ -1,4 +1,4 @@
-# pysh_ca
+# mnist_pysh_ca
 <!-- <img src="https://github.com/tm224/PushGP-CA-Image-Class/blob/main/demo.gif" width="200" /> -->
 
 Python based project combining the PyshGP and cellular-automaton packages with the aim of optimising update rules to allow for accurate classification.
