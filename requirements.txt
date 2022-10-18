@@ -30,7 +30,7 @@ imagesize==1.2.0
 importlib-metadata==4.3.0
 iniconfig==1.1.1
 Jinja2==3.0.1
-joblib==1.0.1
+joblib==1.2.0
 keras-nightly==2.5.0.dev2021032900
 Keras-Preprocessing==1.1.2
 keyring==23.0.1
