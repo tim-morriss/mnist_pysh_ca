@@ -2,7 +2,7 @@ import numpy as np
 
 from cellular_automaton import CAWindow, CellularAutomaton
 from pysh_ca.ca.pysh_ca import PyshCA
-from collections import Sequence
+from typing import Sequence
 
 
 class RunCA(CAWindow):
@@ -42,8 +42,10 @@ class RunCA(CAWindow):
             Sequence of cell states.
         """
 
-        # Initialise self.states with the specified number of empty arrays.
-        self.states = np.zeros([last_evolution_step, 28, 28], dtype=np.float32)
+        # Initialise self.states with the specified number of empty arrays,
+        # sized to the CA's actual grid dimensions (not hardcoded to MNIST's 28x28).
+        dimension = self._cellular_automaton.get_dimension()
+        self.states = np.zeros([last_evolution_step] + list(dimension), dtype=np.float32)
         while self._not_at_the_end(last_evolution_step):
             self._cellular_automaton.evolve(evolutions_per_step)
             self.update_states(self._cellular_automaton.evolution_step)

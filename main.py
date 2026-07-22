@@ -6,8 +6,8 @@ from mnist_pysh_ca import MNISTPyshCA
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-p', '--pop_size', help="PushGP population size (default 50).", nargs='?', default=1, type=int)
-    parser.add_argument('-g', '--gens', help="PushGP generations (default 10).", nargs='?', default=1, type=int)
+    parser.add_argument('-p', '--pop_size', help="PushGP population size (default 1).", nargs='?', default=1, type=int)
+    parser.add_argument('-g', '--gens', help="PushGP generations (default 1).", nargs='?', default=1, type=int)
     parser.add_argument('-s', '--steps', help="Steps for the CA (default 25).", nargs='?', default=25, type=int)
     parser.add_argument('-c', '--cut_size', help="Number of samples for each label (default 10).", nargs='?',
                         default=10, type=int)

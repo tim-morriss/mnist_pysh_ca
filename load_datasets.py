@@ -108,20 +108,20 @@ class LoadDatasets:
         tuple(np.ndarray, np.ndarray)
             Filtered data (x) and labels (y) arrays
         """
-        temp_x = np.empty([0, x.shape[1]])
-        temp_y = np.empty([0, y.shape[1]])
+        # Collect per-digit arrays and concatenate once at the end, instead of
+        # np.append-in-a-loop which reallocates and copies the whole result every iteration.
+        x_parts = []
+        y_parts = []
         for num in numbers_to_return:
             x_1, y_1 = LoadDatasets.exclusive_digit(x, y, num)
             if shuffle:
                 x_1, y_1 = shuff(x_1, y_1)
             if cut_size is not None:
-                temp_x = np.append(temp_x, x_1[:cut_size], axis=0)
-                temp_y = np.append(temp_y, y_1[:cut_size], axis=0)
-            else:
-                temp_x = np.append(temp_x, x_1, axis=0)
-                temp_y = np.append(temp_y, y_1, axis=0)
+                x_1, y_1 = x_1[:cut_size], y_1[:cut_size]
+            x_parts.append(x_1)
+            y_parts.append(y_1)
 
-        return temp_x, temp_y
+        return np.concatenate(x_parts, axis=0), np.concatenate(y_parts, axis=0)
 
     @staticmethod
     def random_digit(x, y):

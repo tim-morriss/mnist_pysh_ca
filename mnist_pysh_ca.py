@@ -69,7 +69,12 @@ class MNISTPyshCA:
         if mode.lower() not in modes:
             raise ValueError("Invalid mode. Expected either {0}, {1}, or {2}.".format(modes[0], modes[1], modes[2]))
 
-        if next(iter(stacks)) == "core":
+        # ponytail: the per-digit error breakdown in 'testing' mode below only handles exactly two
+        # digit groups. Fail loud here instead of silently mis-slicing for other digit counts.
+        if mode.lower() == 'testing' and len(digits) != 2:
+            raise ValueError("Testing mode's error breakdown only supports exactly 2 digits, got {0}.".format(digits))
+
+        if "core" in stacks:
             stack_parse = "core"
         else:
             if stacks is None:
@@ -127,8 +132,16 @@ class MNISTPyshCA:
 
             return output_str
 
+        def load_or_raise():
+            try:
+                estimator.load(load_filepath)
+            except FileNotFoundError:
+                raise FileNotFoundError(
+                    "No saved model found at '{0}'. Pass an existing file with -lf/--load_file.".format(load_filepath)
+                )
+
         if mode == 'testing':
-            estimator.load(load_filepath)
+            load_or_raise()
             score = estimator.score(X=X, y=y)
             print("\n Error vector: \n", score)
             print("Total Error: \n", score.sum())
@@ -171,7 +184,7 @@ class MNISTPyshCA:
                 print("Program simplified:\n", best_solution.program.code.pretty_str())
 
         if mode == 'simplify':
-            estimator.load(load_filepath)
+            load_or_raise()
             estimator.simplify(X=X, y=y, simplification_steps=simplifcation)
             estimator.save(filepath(" -- simplified", "json", ""))
             best_solution = estimator.solution

@@ -34,4 +34,5 @@ class CAAnimate:
 
         # call the animator
         anim = animation.FuncAnimation(fig, animate, len(x), interval=interval, blit=True)
-        anim.save(filepath, writer='imagemagick')
+        # 'pillow' ships with matplotlib itself, unlike 'imagemagick' which needs a system binary.
+        anim.save(filepath, writer='pillow')

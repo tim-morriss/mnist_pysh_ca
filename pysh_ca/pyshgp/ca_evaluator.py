@@ -66,6 +66,7 @@ class CAEvaluator(Evaluator):
         """
         super().evaluate(program)
         errors = []
+        self.output = []  # reset per-individual; otherwise this grows unbounded across the whole GP run
         # Work through the input and run error function on each one
         for ndx in range(self.X.shape[0]):
             input_x = self.X.iloc[ndx]
